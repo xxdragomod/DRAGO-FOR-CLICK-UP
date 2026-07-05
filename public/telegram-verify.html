@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Telegram Verification — DRAGO PREDICTOR</title>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+@view-transition{navigation:auto}
+::view-transition-old(root){animation:vtOut .22s cubic-bezier(.4,0,.2,1) both}
+::view-transition-new(root){animation:vtIn .26s cubic-bezier(.22,1,.36,1) both}
+@keyframes vtOut{to{opacity:0;transform:translateY(-8px)}}
+@keyframes vtIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+body{min-height:100vh;background:linear-gradient(180deg,#dce2ff 0%,#fff 100%);font-family:'Montserrat',sans-serif;display:flex;justify-content:center;align-items:flex-start;padding-top:70px}
+.content-box{width:95%;max-width:460px;padding:20px;display:flex;flex-direction:column;align-items:center}
+.logo{width:120px;height:auto;margin-bottom:10px}
+.title{font-size:24px;font-weight:900;color:#8B5CF6;margin-bottom:8px;text-align:center}
+.desc{font-size:13px;color:#6b7280;text-align:center;margin-bottom:22px;line-height:1.5;max-width:340px}
+
+/* Steps card */
+.card{background:#f3f4f6;border-radius:24px;padding:20px;width:100%;border:2px solid #fff;box-shadow:0 10px 25px rgba(0,0,0,.05);margin-bottom:18px}
+.step{display:flex;gap:12px;align-items:flex-start;margin-bottom:14px}
+.step:last-child{margin-bottom:0}
+.step-num{flex-shrink:0;width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,#7C3AED,#5B6AF0);color:#fff;font-size:13px;font-weight:900;display:flex;align-items:center;justify-content:center}
+.step-txt{font-size:12.5px;font-weight:700;color:#4b5563;line-height:1.45;padding-top:3px}
+
+/* Telegram button */
+.tg-btn{background:linear-gradient(135deg,#229ED9,#1d8dc2);color:#fff;border:none;padding:16px;border-radius:15px;font-size:16px;font-weight:800;cursor:pointer;width:100%;display:flex;align-items:center;justify-content:center;gap:10px;box-shadow:0 6px 18px rgba(34,158,217,.4);transition:transform .15s,opacity .15s;text-decoration:none}
+.tg-btn:active{transform:scale(.97)}
+.tg-btn svg{width:22px;height:22px;fill:#fff}
+
+/* Continue / secondary buttons */
+.btn{background:linear-gradient(135deg,#7C3AED,#5B6AF0);color:#fff;border:none;padding:16px;border-radius:15px;font-size:16px;font-weight:800;cursor:pointer;width:100%;box-shadow:0 5px 15px rgba(124,58,237,.4);transition:opacity .15s;margin-top:12px}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.link-btn{background:#fff;color:#374151;border:1.5px solid #e5e7eb;padding:13px;border-radius:13px;font-size:13px;font-weight:800;cursor:pointer;width:100%;margin-top:10px}
+
+/* Status row */
+.status-row{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:16px;font-size:12.5px;font-weight:700;color:#9CA3AF}
+.dot{width:9px;height:9px;border-radius:50%;background:#F59E0B;animation:pulse 1.3s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+/* Verified box */
+.verified-box{display:none;width:100%;background:#ECFDF5;border:2px solid #A7F3D0;border-radius:20px;padding:20px;text-align:center;margin-bottom:8px}
+.verified-box.show{display:block}
+.verified-icon{font-size:44px;margin-bottom:8px}
+.verified-title{font-size:18px;font-weight:900;color:#059669;margin-bottom:12px}
+.detail-row{display:flex;justify-content:space-between;align-items:center;font-size:13px;font-weight:700;color:#374151;padding:7px 0;border-top:1px solid #D1FAE5}
+.detail-row .k{color:#6b7280}
+.detail-row .v{color:#111827;font-family:monospace}
+
+.loading{width:100%;text-align:center;padding:40px 0;font-size:13px;font-weight:600;color:#9CA3AF}
+.err-msg{font-size:12.5px;font-weight:700;color:#DC2626;text-align:center;margin-top:12px;display:none}
+
+/* Profile banner */
+#profileBanner{position:fixed;top:16px;left:14px;display:flex;align-items:center;gap:10px;z-index:100;opacity:0;transform:translateX(-20px);transition:opacity .4s,transform .4s}
+#profileBanner.show{opacity:1;transform:translateX(0)}
+#avatarWrap img{width:44px;height:44px;border-radius:50%;object-fit:cover;display:block}
+.avatar-fallback{width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#7C3AED,#5B6AF0);display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:800;color:#fff}
+.profile-info{display:flex;flex-direction:column;line-height:1.3}
+.welcome-text{font-size:10px;font-weight:600;color:#888}
+.user-name{font-size:14px;font-weight:900;color:#1a1a2e;text-transform:uppercase;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* Full-screen overlays */
+.full-ov{display:none;position:fixed;inset:0;z-index:3000;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:30px;background:linear-gradient(180deg,#c3caff,#e2e5ff 40%,#fff)}
+.full-ov.show{display:flex}
+.ov-icon{font-size:54px;margin-bottom:14px}
+.ov-title{font-size:22px;font-weight:900;color:#1E293B;margin-bottom:10px}
+.ov-desc{font-size:14px;color:#6b7280;max-width:320px;line-height:1.6;margin-bottom:20px}
+.ov-link{display:inline-block;background:linear-gradient(135deg,#7C3AED,#5B6AF0);color:#fff;text-decoration:none;padding:12px 24px;border-radius:12px;font-weight:800;font-size:14px}
+</style>
+</head>
+<body>
+
+<!-- Profile banner -->
+<div id="profileBanner">
+  <div id="avatarWrap"></div>
+  <div class="profile-info">
+    <span class="welcome-text">Welcome,</span>
+    <span class="user-name" id="bannerName"></span>
+  </div>
+</div>
+
+<!-- Status overlays -->
+<div class="full-ov" id="ovBanned">
+  <div class="ov-icon">🚫</div>
+  <div class="ov-title">Account Banned</div>
+  <div class="ov-desc">Aapka account permanently ban kar diya gaya hai. Kisi bhi content tak access nahi hai.</div>
+  <a href="https://t.me/xx_drago" target="_blank" class="ov-link">Contact Support</a>
+</div>
+<div class="full-ov" id="ovBlocked">
+  <div class="ov-icon">⛔</div>
+  <div class="ov-title">Account Blocked</div>
+  <div class="ov-desc">Aapka account block kar diya gaya hai. Support se contact karo.</div>
+  <a href="https://t.me/xx_drago" target="_blank" class="ov-link">Contact Support</a>
+</div>
+<div class="full-ov" id="ovPaused">
+  <div class="ov-icon">⏸️</div>
+  <div class="ov-title">Account Paused</div>
+  <div class="ov-desc">Aapka account temporarily pause hai. Thodi der baad try karo.</div>
+  <a href="https://t.me/xx_drago" target="_blank" class="ov-link">Contact Support</a>
+</div>
+
+<!-- Main -->
+<div class="content-box">
+  <img src="/images/logo.jpg" class="logo" alt="Logo">
+  <p class="title">Telegram Verification</p>
+  <p class="desc">Apne account ko verify karne ke liye hamare Telegram bot par jao. Channel join karte hi aap automatically verify ho jaoge.</p>
+
+  <!-- Loading -->
+  <div class="loading" id="loadingState">Loading verification...</div>
+
+  <!-- Verify state -->
+  <div id="verifyState" style="display:none;width:100%">
+    <div class="card">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-txt">Niche <b>Verify on Telegram</b> button dabao — hamara bot khulega.</div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-txt">Bot me <b>Start</b> dabao, phir hamara official <b>channel join</b> karo.</div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-txt">Channel join karke <b>✅ I've Joined</b> dabao — verification turant ho jayegi.</div>
+      </div>
+    </div>
+
+    <a href="#" id="tgBtn" class="tg-btn" target="_blank" rel="noopener">
+      <svg viewBox="0 0 24 24"><path d="M21.5 2.5L2 11.5l7.5 3.5 3.5 7.5 8.5-20zM9.5 15l1.5 4 1-3.5L19 5.5 9.5 15z"/></svg>
+      Verify on Telegram
+    </a>
+    <button class="link-btn" id="refreshBtn" onclick="manualCheck()">🔄 I've verified — Check status</button>
+
+    <div class="status-row" id="statusRow"><span class="dot"></span><span>Waiting for verification...</span></div>
+    <div class="err-msg" id="errMsg"></div>
+  </div>
+
+  <!-- Verified state -->
+  <div class="verified-box" id="verifiedBox">
+    <div class="verified-icon">✅</div>
+    <div class="verified-title">Verification Complete!</div>
+    <div class="detail-row"><span class="k">Name</span><span class="v" id="vName">—</span></div>
+    <div class="detail-row"><span class="k">Username</span><span class="v" id="vUser">—</span></div>
+    <div class="detail-row"><span class="k">Telegram ID</span><span class="v" id="vId">—</span></div>
+  </div>
+  <button class="btn" id="continueBtn" style="display:none" onclick="goPayment()">Continue →</button>
+</div>
+
+<script>
+const API = "https://flask-hello-world-nu-sooty-63.vercel.app";
+let pollTmr = null, isVerified = false;
+
+// ── Auth helpers ──
+function ud(){ try{return JSON.parse(localStorage.getItem("_ud")||"null");}catch(e){return null;} }
+function auth(){
+  const u=ud();
+  if(!u||!u.uid||!u.session_signature) return null;
+  return {uid:u.uid,session_signature:u.session_signature};
+}
+function esc(s){ return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+function goLogin(){ localStorage.removeItem("_ud"); localStorage.removeItem("_qas"); window.location.replace("/"); }
+function goPayment(){
+  // If user already has active/free plan, skip payment and go home
+  const u=ud(); const ss=u&&u.subscription_status;
+  if(ss==="active"||ss==="free"){ window.location.replace("/home"); return; }
+  window.location.replace("/payment");
+}
+
+async function api(path, body){
+  const r=await fetch(API+path,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
+  const d=await r.json().catch(()=>({}));
+  if(!r.ok){ const e=new Error(d.detail||"Error "+r.status); e.status=r.status; e.detail=d.detail||""; throw e; }
+  return d;
+}
+async function withRefresh(cb){
+  try{ return await cb(); }
+  catch(e){
+    if(e.status===403 && e.detail==="session_expired"){
+      const a=auth(); if(!a){ goLogin(); return; }
+      try{
+        const d=await api("/api/refresh-session",a);
+        if(d.session_signature){ const u=ud(); u.session_signature=d.session_signature; localStorage.setItem("_ud",JSON.stringify(u)); }
+        return await cb();
+      }catch(e2){ if(e2.status===403){ goLogin(); return; } throw e2; }
+    }
+    throw e;
+  }
+}
+
+// ── Overlays ──
+function hideOvs(){ ["ovBanned","ovBlocked","ovPaused"].forEach(id=>document.getElementById(id).classList.remove("show")); }
+// returns false if flow should stop
+function handleStatus(as, ss){
+  if(as==="banned") { stopPoll(); hideOvs(); document.getElementById("ovBanned").classList.add("show");  return false; }
+  if(as==="blocked"){ stopPoll(); hideOvs(); document.getElementById("ovBlocked").classList.add("show"); return false; }
+  if(as==="paused") { stopPoll(); hideOvs(); document.getElementById("ovPaused").classList.add("show");  return false; }
+  if(ss==="active" || ss==="free") { window.location.replace("/home"); return false; }
+  hideOvs(); return true;
+}
+
+// ── Profile ──
+function loadProfile(){
+  const u=ud(); if(!u||!u.name) return;
+  const b=document.getElementById("profileBanner");
+  document.getElementById("bannerName").textContent=u.name;
+  const aw=document.getElementById("avatarWrap");
+  if(u.picture){
+    const img=document.createElement("img"); img.src=u.picture; img.alt=u.name;
+    img.onerror=()=>{ img.remove(); mkAvatar(aw,u.name); };
+    aw.appendChild(img);
+  } else { mkAvatar(aw,u.name); }
+  b.style.display="flex"; setTimeout(()=>b.classList.add("show"),50);
+}
+function mkAvatar(el,name){
+  const d=document.createElement("div"); d.className="avatar-fallback";
+  d.textContent=(name||"U").charAt(0).toUpperCase(); el.appendChild(d);
+}
+
+// ── Telegram verification removed ──
+// Ye gate hata diya gaya hai. Koi bhi jo yahan aata hai (purana link/cache)
+// use turant aage bhej do — subscribed -> home, warna -> payment. Koi API call nahi.
+function init(){
+  const a=auth(); if(!a){ goLogin(); return; }
+  let ss="none";
+  try{ const u=JSON.parse(localStorage.getItem("_ud")||"null"); ss=(u&&u.subscription_status)||"none"; }catch(e){}
+  if(ss==="active"||ss==="free"){ window.location.replace("/home"); }
+  else{ goPayment(); }
+}
+
+function showErr(m){ const el=document.getElementById("errMsg"); el.style.display="block"; el.textContent=m; }
+function clearErr(){ const el=document.getElementById("errMsg"); el.style.display="none"; el.textContent=""; }
+
+function showVerified(d){
+  isVerified=true; stopPoll();
+  document.getElementById("loadingState").style.display="none";
+  document.getElementById("verifyState").style.display="none";
+  document.getElementById("vName").textContent = d.telegram_name || "—";
+  document.getElementById("vUser").textContent = d.telegram_username ? ("@"+d.telegram_username) : "—";
+  document.getElementById("vId").textContent   = d.telegram_id || "—";
+  document.getElementById("verifiedBox").classList.add("show");
+  document.getElementById("continueBtn").style.display="block";
+  // Auto-forward after a short pause so the user sees their details
+  setTimeout(()=>{ if(isVerified) goPayment(); }, 2200);
+}
+
+// ── Polling ──
+function startPoll(){ if(pollTmr) return; pollTmr=setInterval(doPoll,4000); }
+function stopPoll(){ if(pollTmr){ clearInterval(pollTmr); pollTmr=null; } }
+async function doPoll(){
+  const a=auth(); if(!a) return;
+  try{
+    const d=await withRefresh(()=>api("/api/tg-status",a));
+    if(!d) return;
+    if(!handleStatus(d.account_status||"active", d.subscription_status||"none")) return;
+    if(d.telegram_verified){ clearErr(); showVerified(d); }
+  }catch(e){}
+}
+
+// ── Manual check ──
+window.manualCheck=async function(){
+  const btn=document.getElementById("refreshBtn");
+  btn.disabled=true; const old=btn.textContent; btn.textContent="Checking...";
+  clearErr();
+  const a=auth(); if(!a){ goLogin(); return; }
+  try{
+    const d=await withRefresh(()=>api("/api/tg-status",a));
+    if(d){
+      if(!handleStatus(d.account_status||"active", d.subscription_status||"none")) return;
+      if(d.telegram_verified){ showVerified(d); return; }
+      showErr("Abhi tak verify nahi hua. Bot me channel join karke ✅ I've Joined dabao.");
+    }
+  }catch(e){
+    showErr(navigator.onLine?"Server error. Try again.":"Internet nahi hai.");
+  } finally {
+    btn.disabled=false; btn.textContent=old;
+  }
+};
+
+// Re-check when user returns to the tab (after visiting Telegram)
+document.addEventListener("visibilitychange",()=>{ if(!document.hidden && !isVerified) doPoll(); });
+
+// ── Init ──
+loadProfile();
+init();
+</script>
+</body>
+</html>

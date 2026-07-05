@@ -1,0 +1,658 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Game — Drago Predictor</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+@view-transition{navigation:auto}
+::view-transition-old(root){animation:vtOut .22s cubic-bezier(.4,0,.2,1) both}
+::view-transition-new(root){animation:vtIn .26s cubic-bezier(.22,1,.36,1) both}
+@keyframes vtOut{to{opacity:0;transform:translateY(-8px)}}
+@keyframes vtIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+html,body{height:100%;overflow:hidden}
+body{display:flex;flex-direction:column;background:linear-gradient(180deg,#c3caff 0%,#e2e5ff 40%,#ffffff 100%);font-family:'Montserrat',sans-serif;}
+.hero-bar{flex-shrink:0;width:100%;background:rgba(255,255,255,0.92);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);padding:10px 16px;display:flex;align-items:center;gap:12px;border-bottom:1.5px solid rgba(255,255,255,0.95);box-shadow:0 8px 28px rgba(100,80,220,.15);animation:slideDown .4s cubic-bezier(.22,1,.36,1) both;z-index:100;}
+@keyframes slideDown{from{opacity:0;transform:translateY(-100%)}to{opacity:1;transform:translateY(0)}}
+.back-btn{width:40px;height:40px;flex-shrink:0;border-radius:50%;background:#fff;border:1.5px solid #eef0ff;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 4px 12px rgba(124,92,252,.12);transition:background .18s,transform .18s cubic-bezier(.34,1.56,.64,1);-webkit-tap-highlight-color:transparent;}
+.back-btn:active{transform:scale(.88);background:#f4f4ff}
+.back-btn i{font-size:15px;color:#7C5CFC}
+.hero-logo{width:48px;height:48px;flex-shrink:0;border-radius:12px;object-fit:contain;background:transparent;}
+.hero-info{display:flex;flex-direction:column;gap:2px;flex:1;min-width:0}
+.hero-sub{font-size:16px;font-weight:900;color:#1a1a2e;text-transform:uppercase;letter-spacing:.4px;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.hero-title{font-size:11px;font-weight:800;color:#7C5CFC;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:.4px;text-transform:uppercase;}
+.frame-wrap{flex:1;position:relative;overflow:hidden;background:#fff;animation:fadeIn .45s .15s ease both;}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+#gameFrame{position:absolute;inset:0;width:100%;height:100%;border:none;background:#fff;}
+.fallback{position:absolute;inset:0;background:linear-gradient(180deg,#c3caff,#e2e5ff 40%,#fff);display:none;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:30px;animation:fadeIn .3s ease both;}
+.fallback.show{display:flex}
+.fallback-icon{font-size:52px;margin-bottom:16px;color:#7C5CFC;opacity:.7}
+.fallback-title{font-size:20px;font-weight:900;color:#1E293B;margin-bottom:8px}
+.fallback-desc{font-size:13px;color:#6b7280;max-width:300px;line-height:1.6;margin-bottom:24px}
+.fallback-btn{padding:15px 32px;border-radius:16px;border:none;background:linear-gradient(135deg,#7C5CFC,#5B6AF0);color:#fff;font-family:'Montserrat',sans-serif;font-size:15px;font-weight:900;letter-spacing:.4px;cursor:pointer;box-shadow:0 8px 24px rgba(124,92,252,.45);display:flex;align-items:center;gap:10px;transition:transform .18s cubic-bezier(.34,1.56,.64,1);-webkit-tap-highlight-color:transparent;text-decoration:none;}
+.fallback-btn:active{transform:scale(.96)}
+.fallback-btn i{font-size:17px}
+.frame-loader{position:absolute;inset:0;background:linear-gradient(180deg,#c3caff,#e2e5ff 40%,#fff);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;z-index:10;transition:opacity .3s;}
+.frame-loader.hide{opacity:0;pointer-events:none}
+.spinner{width:44px;height:44px;border:4px solid rgba(124,92,252,.2);border-top-color:#7C5CFC;border-radius:50%;animation:spin .8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loader-text{font-size:12px;font-weight:800;color:#9ca3af;letter-spacing:.5px;text-transform:uppercase}
+#authOverlay{position:fixed;inset:0;background:linear-gradient(180deg,#c3caff,#e2e5ff 40%,#fff);display:flex;align-items:center;justify-content:center;z-index:999;transition:opacity .3s;}
+.full-ov{display:none;position:fixed;inset:0;z-index:3000;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:30px;background:linear-gradient(180deg,#c3caff,#e2e5ff 40%,#fff)}
+.full-ov.show{display:flex;animation:fadeIn .3s ease both}
+.ov-icon{font-size:54px;margin-bottom:14px}
+.ov-title{font-size:22px;font-weight:900;color:#1E293B;margin-bottom:10px}
+.ov-desc{font-size:14px;color:#6b7280;max-width:300px;line-height:1.6;margin-bottom:20px}
+.ov-link{display:inline-block;background:linear-gradient(135deg,#7C3AED,#5B6AF0);color:#fff;text-decoration:none;padding:12px 24px;border-radius:12px;font-weight:800;font-size:14px;box-shadow:0 8px 24px rgba(124,92,252,.35)}
+.fab-container{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:500;display:flex;align-items:center;justify-content:center;background:transparent;border-radius:40px;box-shadow:none;padding:0;gap:0;animation:navSlideUp .45s .15s cubic-bezier(.22,1,.36,1) both;transition:background .35s ease, box-shadow .35s ease, padding .35s cubic-bezier(.22,1,.36,1), gap .35s cubic-bezier(.22,1,.36,1);}
+@keyframes navSlideUp{from{opacity:0;transform:translateX(-50%) translateY(24px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+.fab-container.open{background:rgba(255,255,255,0.92);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1.5px solid rgba(255,255,255,0.95);box-shadow:0 8px 28px rgba(0,0,0,.10), 0 2px 8px rgba(0,0,0,.06);padding:9px 12px;gap:8px;}
+.fab-toggle-wrap{display:flex;align-items:center;justify-content:center;flex:0 0 auto;}
+.fab-toggle{width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,#7C5CFC,#5B6AF0);border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:none;transition:transform .22s cubic-bezier(.34,1.56,.64,1), background .2s;-webkit-tap-highlight-color:transparent;position:relative;z-index:2;flex-shrink:0;}
+.fab-toggle:active{transform:scale(.9)}
+.fab-toggle i{font-size:18px;color:#fff;transition:transform .3s ease}
+.fab-toggle.open i{transform:rotate(45deg)}
+.fab-side{display:flex;align-items:center;overflow:hidden;max-width:0;transition:max-width .35s cubic-bezier(.22,1,.36,1);flex-shrink:0;}
+.fab-side.show{max-width:200px;}
+.fab-left{justify-content:flex-end;}
+.fab-right{justify-content:flex-start;}
+.fab-side-btn{height:42px;padding:0 18px;border-radius:24px;border:none;display:flex;flex-direction:row;align-items:center;justify-content:center;gap:8px;cursor:pointer;white-space:nowrap;transition:transform .2s cubic-bezier(.34,1.56,.64,1), opacity .25s;-webkit-tap-highlight-color:transparent;flex-shrink:0;opacity:0;transform:scale(.5);}
+.fab-side.show .fab-side-btn{opacity:1;transform:scale(1);transition-delay:.08s;}
+.fab-hack-btn{background:linear-gradient(135deg,#7C5CFC,#5B6AF0);}
+.fab-setting-btn{background:linear-gradient(135deg,#7C5CFC,#5B6AF0);}
+.fab-side-btn i{font-size:16px;color:#fff}
+.fab-side-btn span{font-size:13px;font-weight:800;color:#fff;letter-spacing:.3px;line-height:1}
+.fab-side-btn:active{transform:scale(.92) !important}
+.panel-overlay{position:fixed;inset:0;background:rgba(10,8,30,.55);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);z-index:400;opacity:0;pointer-events:none;transition:opacity .3s;}
+.panel-overlay.show{opacity:1;pointer-events:all;}
+.slide-panel{position:fixed;bottom:0;left:0;right:0;z-index:450;background:rgba(255,255,255,0.97);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-radius:32px 32px 0 0;border-top:1.5px solid rgba(255,255,255,0.6);padding:0 0 40px;transform:translateY(100%);transition:transform .42s cubic-bezier(.16, 1, .3, 1);height:75vh;max-height:75vh;overflow-y:auto;box-shadow:0 -18px 50px rgba(124,92,252,.12);}
+.slide-panel.show{transform:translateY(0);}
+.panel-handle{width:44px;height:5px;background:rgba(124,92,252,0.2);border-radius:10px;margin:16px auto 0;}
+.panel-head{display:flex;align-items:center;justify-content:flex-start;padding:24px 22px 0px;}
+.panel-title-main{font-size:24px;font-weight:900;background:linear-gradient(135deg,#7C5CFC,#5B6AF0);-webkit-background-clip:text;-webkit-text-fill-color:transparent;letter-spacing:1.5px;}
+.pred-wrap{padding:24px 16px 0;}
+@keyframes callPop{0%{transform:scale(.7);opacity:0}100%{transform:scale(1);opacity:1}}
+.pred-image-container{width:100%;display:flex;justify-content:center;background:#ffffff;border:1.5px solid rgba(124,92,252,0.08);border-radius:24px;overflow:hidden;box-shadow:0 8px 32px rgba(124,92,252,0.04);margin-bottom:14px;}
+.pred-img-large{width:100%;max-height:280px;object-fit:contain;display:block;animation:callPop .4s cubic-bezier(.34,1.56,.64,1);}
+.pred-img-wait{width:100%;height:160px;background:#f8fafc;border-radius:24px;display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:900;color:#94a3b8;letter-spacing:1px;animation:callPop .4s cubic-bezier(.34,1.56,.64,1);}
+.pred-period-badge{display:inline-flex;align-items:center;gap:6px;padding:6px 16px;background:rgba(124,92,252,0.08);color:#7C5CFC;font-size:11px;font-weight:800;border-radius:100px;letter-spacing:0.5px;text-transform:uppercase;margin-bottom:20px;}
+.pred-card-main{background:#ffffff;border-radius:28px;padding:20px;border:1.5px solid rgba(124,92,252,0.06);box-shadow:0 12px 40px rgba(124,92,252,0.05);margin-bottom:16px;}
+.pill-progress-card{background:rgba(124,92,252,0.03);border:1px solid rgba(124,92,252,0.06);border-radius:20px;padding:16px;margin-bottom:20px;}
+.pill-progress-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
+.pill-progress-lbl{font-size:11px;font-weight:800;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;}
+.pill-progress-text{font-size:20px;font-weight:900;color:#7C5CFC;}
+.pill-track{width:100%;height:18px;background:rgba(124,92,252,0.08);border-radius:10px;overflow:hidden;position:relative;}
+.pill-fill{height:100%;background:linear-gradient(90deg,#7C5CFC,#5B6AF0);border-radius:10px;transition:width 0.8s cubic-bezier(0.22,1,0.36,1);box-shadow:0 0 10px rgba(124,92,252,0.3);}
+.pred-meters-row{display:flex;gap:10px;justify-content:space-between;}
+.pred-meter-card{flex:1;background:#ffffff;border:1px solid rgba(0,0,0,0.04);border-radius:20px;padding:14px 10px;display:flex;flex-direction:column;align-items:center;gap:8px;box-shadow:0 4px 16px rgba(0,0,0,0.02);transition:transform 0.2s;}
+.pred-meter-card:hover{transform:translateY(-2px);}
+.pred-meter-ring{position:relative;width:64px;height:64px;display:flex;align-items:center;justify-content:center;}
+.pred-meter-ring svg{position:absolute;inset:0;width:100%;height:100%;}
+.pred-meter-val{position:relative;z-index:1;text-align:center;font-size:11px;font-weight:900;color:#1e293b;line-height:1.1;}
+.pred-meter-sub{font-size:6.5px;font-weight:800;color:#64748b;text-transform:uppercase;letter-spacing:.2px;margin-top:1px;}
+.pred-meter-lbl{font-size:9px;font-weight:800;color:#64748b;text-transform:uppercase;letter-spacing:.5px;text-align:center;}
+.pred-footer{display:flex;align-items:center;justify-content:center;gap:6px;margin-top:14px;padding-top:12px;border-top:1px solid #f3f4f6;}
+.pred-footer-ic{font-size:10px;color:#9ca3af;}
+.pred-footer-txt{font-size:10px;font-weight:700;color:#9ca3af;letter-spacing:.3px;}
+.pred-loading{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:50px 0;}
+.pred-loading .spinner{width:32px;height:32px;border-color:rgba(124,92,252,.2);border-top-color:#7C5CFC;}
+.pred-loading .loader-text{font-size:11.5px;color:#6b7280;}
+.pred-msg-box{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 20px;text-align:center;gap:10px;}
+.pred-msg-ic{font-size:36px;opacity:.5;}
+.pred-msg-txt{font-size:13px;font-weight:700;color:#6b7280;line-height:1.6;}
+.pred-upgrade-btn{display:inline-flex;align-items:center;gap:8px;margin-top:6px;background:linear-gradient(135deg,#7C5CFC,#5B6AF0);color:#fff;font-size:12px;font-weight:800;text-decoration:none;padding:11px 22px;border-radius:14px;box-shadow:0 6px 20px rgba(124,92,252,.4);}
+.set-wrap{padding:20px 16px 0;}
+.set-section-label{font-size:10px;font-weight:800;color:#6b7280;text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;padding-left:2px;}
+.premium-server-btn{width:100%;background:rgba(124,92,252,0.08);border:1.5px solid rgba(124,92,252,0.15);border-radius:24px;padding:16px;display:flex;flex-direction:column;align-items:center;gap:10px;cursor:pointer;margin-bottom:24px;transition:transform 0.15s,background 0.2s,box-shadow 0.2s;}
+.premium-server-btn:active{transform:scale(0.97);}
+.premium-server-btn:hover{background:rgba(124,92,252,0.12);}
+.premium-server-img{width:48px;height:48px;object-fit:contain;}
+.premium-server-text{font-size:13px;font-weight:900;color:#4C2FA1;text-transform:uppercase;letter-spacing:0.8px;text-align:center;line-height:1.4;}
+.servers-row{display:flex;gap:12px;margin-bottom:24px;}
+.server-select-btn{flex:1;background:#f4f5fc;border:2.5px solid transparent;border-radius:20px;padding:16px 10px;display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer;transition:transform 0.15s,border-color 0.2s,background 0.2s,box-shadow 0.2s;}
+.server-select-btn:active{transform:scale(0.96);}
+.server-select-btn.active{background:rgba(124,92,252,0.04);border-color:#7C5CFC;box-shadow:0 8px 24px rgba(124,92,252,0.1);}
+.server-select-img{width:46px;height:46px;object-fit:contain;}
+.server-select-text{font-size:14px;font-weight:900;color:#555577;text-transform:uppercase;letter-spacing:0.5px;}
+.server-select-btn.active .server-select-text{color:#7C5CFC;}
+.injector-row{display:flex;align-items:center;justify-content:space-between;background:#ffffff;border:1.5px solid rgba(124,92,252,0.1);border-radius:20px;padding:16px 20px;margin-bottom:16px;box-shadow:0 4px 18px rgba(124,92,252,0.03);}
+.injector-label{font-size:18px;font-weight:900;color:#7C5CFC;letter-spacing:0.8px;text-transform:uppercase;}
+.switch{position:relative;display:inline-block;width:56px;height:30px;}
+.switch input{opacity:0;width:0;height:0;}
+.slider{position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background-color:#cbd5e1;transition:.3s;border-radius:34px;}
+.slider:before{position:absolute;content:"";height:22px;width:22px;left:4px;bottom:4px;background-color:white;transition:.3s;border-radius:50%;box-shadow:0 2px 6px rgba(0,0,0,0.15);}
+input:checked + .slider{background-color:#7C5CFC;}
+input:checked + .slider:before{transform:translateX(26px);}
+.set-info{display:flex;align-items:flex-start;gap:10px;margin-top:14px;background:rgba(124,92,252,.05);border:1px solid rgba(124,92,252,.15);border-radius:14px;padding:12px 14px;}
+.set-info-ic{font-size:14px;color:#7C5CFC;flex-shrink:0;margin-top:1px;}
+.set-info-txt{font-size:11.5px;font-weight:600;color:#475569;line-height:1.55;}
+
+/* ════════════════════════════════════════
+   🛸 FLOATING WIDGET — COMPACT REDESIGN
+════════════════════════════════════════ */
+#injectorWidget{
+  position:fixed;top:22%;left:calc(50% - 108px);
+  z-index:4000;cursor:grab;user-select:none;touch-action:none;
+  filter:drop-shadow(0 10px 28px rgba(124,92,252,0.30));
+}
+#injectorWidget:active{cursor:grabbing;}
+
+/* Card — slimmer, tighter */
+.widget-card{
+  width:216px;
+  background:#ffffff;
+  border-radius:26px;
+  border:1.5px solid rgba(124,92,252,0.10);
+  overflow:hidden;
+  display:flex;flex-direction:column;
+  animation:widgetPop .32s cubic-bezier(0.34,1.56,0.64,1);
+}
+@keyframes widgetPop{from{transform:scale(0.75);opacity:0}to{transform:scale(1);opacity:1}}
+
+/* Purple gradient header strip */
+.widget-header{
+  background:linear-gradient(135deg,#7C5CFC,#5B6AF0);
+  padding:11px 13px 10px;
+  display:flex;align-items:center;gap:8px;
+}
+.widget-logo{
+  width:26px;height:26px;border-radius:50%;
+  border:1.5px solid rgba(255,255,255,0.35);
+  object-fit:contain;background:rgba(255,255,255,0.15);flex-shrink:0;
+}
+.widget-title{
+  font-size:11px;font-weight:900;color:#ffffff;
+  letter-spacing:0.6px;text-transform:uppercase;
+  font-family:'Montserrat',sans-serif;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+
+/* Period badge */
+.widget-period-badge{
+  margin:9px 11px 0;
+  background:rgba(124,92,252,0.07);
+  border:1px solid rgba(124,92,252,0.14);
+  color:#7C5CFC;font-size:8px;font-weight:900;
+  text-align:center;padding:5px 8px;border-radius:100px;
+  letter-spacing:0.6px;text-transform:uppercase;
+}
+
+/* Prediction image area */
+.widget-body{padding:8px 11px 0;}
+.widget-pred-box{
+  width:100%;height:80px;
+  background:#f5f6fc;border-radius:14px;
+  display:flex;align-items:center;justify-content:center;overflow:hidden;
+}
+.widget-pred-img{max-width:100%;max-height:100%;object-fit:contain;}
+.widget-pred-wait{font-size:12px;font-weight:900;color:#b0bec5;letter-spacing:1px;}
+
+/* EXIT / HIDE buttons */
+.widget-footer{display:flex;gap:7px;padding:8px 11px 12px;}
+.widget-btn{
+  flex:1;height:32px;border-radius:100px;border:none;
+  font-family:'Montserrat',sans-serif;font-size:10px;font-weight:900;
+  letter-spacing:0.4px;cursor:pointer;
+  transition:transform 0.15s,opacity 0.15s;
+  -webkit-tap-highlight-color:transparent;
+}
+.widget-btn:active{transform:scale(0.93);opacity:0.85;}
+.btn-exit{background:#eef0f8;color:#6b7280;}
+.btn-hide{
+  background:linear-gradient(135deg,#7C5CFC,#5B6AF0);
+  color:#ffffff;
+  box-shadow:0 3px 12px rgba(124,92,252,0.35);
+}
+
+/* ── Ball (minimized) mode ── */
+.widget-ball{
+  width:46px;height:46px;
+  background:#ffffff;border-radius:50%;
+  border:2.5px solid #7C5CFC;
+  box-shadow:0 5px 18px rgba(124,92,252,0.42);
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;position:relative;
+  animation:widgetBallSpin 12s linear infinite, widgetPop .3s cubic-bezier(0.34,1.56,.64,1);
+}
+.widget-ball-logo{width:32px;height:32px;object-fit:contain;border-radius:50%;}
+@keyframes widgetBallSpin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+
+/* Green live-pulse dot */
+.widget-ball::after{
+  content:'';position:absolute;top:1px;right:1px;
+  width:10px;height:10px;background:#22c55e;
+  border-radius:50%;border:2px solid #fff;
+  animation:livePulse 1.6s ease-in-out infinite;
+}
+@keyframes livePulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.35);opacity:0.7}}
+</style>
+</head>
+<body>
+<div id="authOverlay"><div class="spinner"></div></div>
+<div class="full-ov" id="ovBanned"><div class="ov-icon">&#128683;</div><div class="ov-title">Account Banned</div><div class="ov-desc">Aapka account permanently ban kar diya gaya hai.</div><a href="https://t.me/xx_drago" target="_blank" class="ov-link">Contact Support</a></div>
+<div class="full-ov" id="ovBlocked"><div class="ov-icon">&#9940;</div><div class="ov-title">Account Blocked</div><div class="ov-desc">Aapka account block kar diya gaya hai. Support se contact karo.</div><a href="https://t.me/xx_drago" target="_blank" class="ov-link">Contact Support</a></div>
+<div class="full-ov" id="ovPaused"><div class="ov-icon">&#9208;</div><div class="ov-title">Account Paused</div><div class="ov-desc">Aapka account temporarily pause hai.</div><a href="https://t.me/xx_drago" target="_blank" class="ov-link">Contact Support</a></div>
+<div class="full-ov" id="ovExpired"><div class="ov-icon">&#9203;</div><div class="ov-title">Subscription Expired</div><div class="ov-desc">Aapka plan expire ho gaya hai. Naya plan lo.</div><a href="/payment" class="ov-link">Select Plan</a></div>
+<div class="full-ov" id="ovNoLink"><div class="ov-icon">&#128279;</div><div class="ov-title">Link Not Found</div><div class="ov-desc">Is game ka link available nahi hai. Wapas jao.</div><a href="/game" class="ov-link">Back to Games</a></div>
+<div class="hero-bar">
+  <button class="back-btn" id="backBtn" aria-label="Back"><i class="fa-solid fa-arrow-left"></i></button>
+  <img class="hero-logo" src="/images/logo.jpg" alt="Drago Predictor">
+  <div class="hero-info"><span class="hero-sub">Drago Predictor</span><span class="hero-title" id="heroTitle">Game</span></div>
+</div>
+<div class="frame-wrap">
+  <div class="frame-loader" id="frameLoader"><div class="spinner"></div><span class="loader-text">Loading Game...</span></div>
+  <iframe id="gameFrame" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox allow-top-navigation-by-user-activation" allow="accelerometer; autoplay; clipboard-read; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+  <div class="fallback" id="fallback">
+    <div class="fallback-icon"><i class="fa-solid fa-gamepad"></i></div>
+    <div class="fallback-title" id="fbTitle">Game</div>
+    <div class="fallback-desc">Yeh platform direct open nahi ho sakta. Naye tab mein kholo.</div>
+    <a class="fallback-btn" id="fbBtn" href="#" target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-arrow-up-right-from-square"></i>Open Game</a>
+  </div>
+</div>
+
+<!-- Floating Draggable Widget -->
+<div id="injectorWidget" style="display:none;">
+  <div id="widgetCard" class="widget-card">
+    <div class="widget-header">
+      <img class="widget-logo" src="/images/logo.jpg" alt="logo">
+      <span class="widget-title">Drago Predictor</span>
+    </div>
+    <div class="widget-period-badge" id="widgetPeriod">PERIOD: —</div>
+    <div class="widget-body">
+      <div class="widget-pred-box" id="widgetPredBox">
+        <div class="widget-pred-wait">WAIT</div>
+      </div>
+    </div>
+    <div class="widget-footer">
+      <button class="widget-btn btn-exit" id="widgetExitBtn">EXIT</button>
+      <button class="widget-btn btn-hide" id="widgetHideBtn">HIDE</button>
+    </div>
+  </div>
+  <div id="widgetBall" class="widget-ball" style="display:none;">
+    <img class="widget-ball-logo" id="widgetBallLogo" src="/images/server-prime.png" alt="server-logo">
+  </div>
+</div>
+
+<div class="fab-container" id="fabContainer">
+  <div class="fab-side fab-left" id="fabLeft"><button class="fab-side-btn fab-hack-btn" id="hackBtn" aria-label="Hack"><i class="fa-solid fa-bolt"></i><span>HACK</span></button></div>
+  <div class="fab-toggle-wrap"><button class="fab-toggle" id="fabToggle" aria-label="Toggle menu"><i class="fa-solid fa-plus"></i></button></div>
+  <div class="fab-side fab-right" id="fabRight"><button class="fab-side-btn fab-setting-btn" id="settingBtn" aria-label="Settings"><i class="fa-solid fa-gear"></i><span>SETTING</span></button></div>
+</div>
+<div class="panel-overlay" id="panelOverlay"></div>
+<div class="slide-panel" id="hackPanel">
+  <div class="panel-handle"></div>
+  <div class="panel-head"><div class="panel-title-main">HACK</div></div>
+  <div class="pred-wrap">
+    <div id="predBody"><div class="pred-loading"><div class="spinner"></div><span class="loader-text">Loading prediction...</span></div></div>
+    <div class="pred-footer"><i class="fa-solid fa-rotate pred-footer-ic"></i><span class="pred-footer-txt">Auto-updates every round · Self-learning engine</span></div>
+  </div>
+</div>
+<div class="slide-panel" id="settingPanel">
+  <div class="panel-handle"></div>
+  <div class="panel-head"><div class="panel-title-main">SETTING</div></div>
+  <div class="set-wrap">
+    <button class="premium-server-btn" id="premiumSrvBtn">
+      <img class="premium-server-img" src="/images/premium-server.png" alt="Premium Server">
+      <span class="premium-server-text">I want to use my<br>premium server</span>
+    </button>
+    <input type="file" id="dragoFile" accept=".drago" style="display:none">
+    <div id="dragoStatus" class="drago-status" style="display:none"></div>
+    <div class="set-section-label">Available Servers <span style="font-size:9px;color:#7C5CFC;font-weight:900;background:rgba(124,92,252,0.12);padding:2px 7px;border-radius:8px;margin-left:4px;">PAID</span></div>
+    <div class="servers-row">
+      <div class="server-select-btn" id="srvSize" data-srv="size"><img class="server-select-img" src="/images/server-prime.png" alt="Prime"><span class="server-select-text">PRIME</span></div>
+      <div class="server-select-btn" id="srvColor" data-srv="color"><img class="server-select-img" src="/images/server-nova.png" alt="Nova"><span class="server-select-text">NOVA</span></div>
+    </div>
+    <div class="injector-row"><span class="injector-label">INJECTOR</span><label class="switch"><input type="checkbox" id="injectorToggle"><span class="slider"></span></label></div>
+    <div class="set-info"><i class="fa-solid fa-circle-info set-info-ic"></i><span class="set-info-txt">Injector toggle on karne par screen par live drifting box floating dynamic predict karega. Switch off karne par ye gayab ho jayega.</span></div>
+  </div>
+</div>
+
+<script>
+const API = "https://flask-hello-world-nu-sooty-63.vercel.app";
+let pollTmr=null, gameLink="", predGame="", predTf="", predTmr=null, isPaid=false;
+function ud(){ try{ return JSON.parse(localStorage.getItem("_ud")||"null"); }catch(e){ return null; } }
+function auth(){ const u=ud(); if(!u||!u.uid||!u.session_signature) return null; return {uid:u.uid,session_signature:u.session_signature}; }
+function goLogin(){ localStorage.removeItem("_ud"); localStorage.removeItem("_qas"); window.location.replace("/"); }
+async function apiFetch(path,body){ const r=await fetch(API+path,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)}); const d=await r.json().catch(()=>({})); if(!r.ok){ const e=new Error(d.detail||"Error "+r.status); e.status=r.status; e.detail=d.detail||""; throw e; } return d; }
+async function withRefresh(cb){ try{ return await cb(); }catch(e){ if(e.status===403&&e.detail==="session_expired"){ const a=auth(); if(!a){ goLogin(); return; } try{ const d=await apiFetch("/api/refresh-session",a); if(d.session_signature){ const u=ud(); u.session_signature=d.session_signature; localStorage.setItem("_ud",JSON.stringify(u)); } return await cb(); }catch(e2){ if(e2.status===403){ goLogin(); return; } throw e2; } } throw e; } }
+function hideOvs(){ ["ovBanned","ovBlocked","ovPaused","ovExpired","ovNoLink"].forEach(id=>document.getElementById(id).classList.remove("show")); }
+function handleStatus(as,ss){ isPaid=(ss==="active"); applyServerUI(); if(as==="banned"){stopPoll();hideOvs();document.getElementById("ovBanned").classList.add("show");return false;} if(as==="blocked"){stopPoll();hideOvs();document.getElementById("ovBlocked").classList.add("show");return false;} if(as==="paused"){stopPoll();hideOvs();document.getElementById("ovPaused").classList.add("show");return false;} if(ss!=="active"&&ss!=="free"){stopPoll();hideOvs();document.getElementById("ovExpired").classList.add("show");return false;} hideOvs(); return true; }
+function startPoll(){ if(pollTmr) return; pollTmr=setInterval(doPoll,15000); }
+function stopPoll(){ if(pollTmr){ clearInterval(pollTmr); pollTmr=null; } }
+async function doPoll(){ const a=auth(); if(!a) return; try{ const d=await withRefresh(()=>apiFetch("/api/account-status",a)); handleStatus(d.account_status,d.subscription_status); }catch(e){} }
+function hideAuthOverlay(){ const l=document.getElementById("authOverlay"); l.style.opacity="0"; setTimeout(()=>l.style.display="none",300); }
+function loadFrame(url){ const frame=document.getElementById("gameFrame"),loader=document.getElementById("frameLoader"),fb=document.getElementById("fallback"); let t=setTimeout(()=>{ frame.style.display="none"; fb.classList.add("show"); loader.classList.add("hide"); },8000); frame.onload=()=>{ clearTimeout(t); loader.classList.add("hide"); try{ void frame.contentWindow.location.href; }catch(e){} }; frame.onerror=()=>{ clearTimeout(t); frame.style.display="none"; fb.classList.add("show"); loader.classList.add("hide"); }; frame.src=url; }
+function showToast(msg){ let t=document.createElement('div'); t.style.cssText='position:fixed;bottom:100px;left:50%;transform:translateX(-50%) translateY(20px);background:rgba(26,26,46,0.95);backdrop-filter:blur(8px);color:#fff;padding:12px 24px;border-radius:16px;font-size:12px;font-weight:800;z-index:9999;box-shadow:0 10px 30px rgba(0,0,0,0.2);transition:opacity 0.3s,transform 0.3s;opacity:0;text-align:center;white-space:nowrap;'; t.innerText=msg; document.body.appendChild(t); t.offsetHeight; t.style.opacity='1'; t.style.transform='translateX(-50%) translateY(0)'; setTimeout(()=>{ t.style.opacity='0'; t.style.transform='translateX(-50%) translateY(-20px)'; setTimeout(()=>t.remove(),300); },3000); }
+function getServer(){ return localStorage.getItem("_pred_srv")||"color"; }
+function setServer(s){ localStorage.setItem("_pred_srv",s); }
+const CALL_META={GREEN:{img:"/images/call-green.png"},RED:{img:"/images/call-red.png"},BIG:{img:"/images/call-big.png"},SMALL:{img:"/images/call-small.png"}};
+const R_SM=26,CIRC_SM=2*Math.PI*R_SM;
+function buildSmallRing(pct,stroke,id){ const offset=CIRC_SM-(pct/100)*CIRC_SM; return `<svg viewBox="0 0 68 68" style="position:absolute;inset:0;width:100%;height:100%"><circle cx="34" cy="34" r="${R_SM}" fill="none" stroke="#e2e8f0" stroke-width="11"/><circle ${id?`id="${id}"`:''}  cx="34" cy="34" r="${R_SM}" fill="none" stroke="${stroke}" stroke-width="11" stroke-linecap="round" stroke-dasharray="${CIRC_SM.toFixed(2)}" stroke-dashoffset="${offset.toFixed(2)}" transform="rotate(-90 34 34)" style="transition:stroke-dashoffset .5s ease"/></svg>`; }
+function badgePct(badge){ const b=(badge||"").toLowerCase(); if(b.includes("diamond")||b.includes("plat")) return 100; if(b.includes("gold")) return 75; if(b.includes("silver")) return 50; if(b.includes("bronze")) return 25; return 40; }
+function parseTfSecs(tf){ if(!tf) return 60; tf=tf.toLowerCase().trim(); const m=tf.match(/(\d+)\s*m/); if(m) return parseInt(m[1])*60; const s=tf.match(/(\d+)\s*s/); if(s) return parseInt(s[1]); return 60; }
+let timerTmr=null,_tfSecs=60,lastRem=-1;
+function getTimerRemaining(){ const now=Math.floor(Date.now()/1000); return _tfSecs-(now%_tfSecs); }
+function tickTimer(){ const rem=getTimerRemaining(),pct=(rem/_tfSecs)*100,offset=CIRC_SM-(pct/100)*CIRC_SM,mins=Math.floor(rem/60),secs=rem%60,str=mins>0?`${mins}:${String(secs).padStart(2,'0')}`:`${secs}s`,fillEl=document.getElementById('tmr-fill'),valEl=document.getElementById('tmr-val'); if(!fillEl||!valEl){ stopTimerTick(); return; } fillEl.setAttribute('stroke-dashoffset',offset.toFixed(2)); valEl.textContent=str; if(lastRem===1&&rem===_tfSecs){ setTimeout(()=>{ loadPrediction(); },1000); } lastRem=rem; }
+function startTimerTick(){ _tfSecs=parseTfSecs(predTf)||60; lastRem=-1; tickTimer(); if(timerTmr) return; timerTmr=setInterval(tickTimer,1000); }
+function stopTimerTick(){ if(timerTmr){ clearInterval(timerTmr); timerTmr=null; } }
+function updateFloatingWidget(res){ const call=(res.prediction||"WAIT").toUpperCase(),period=res.period||"—",meta=CALL_META[call]; const wp=document.getElementById('widgetPeriod'); if(wp) wp.textContent="PERIOD: "+period; const wpb=document.getElementById('widgetPredBox'); if(wpb){ wpb.innerHTML=meta?`<img src="${meta.img}" class="widget-pred-img" alt="${call}">`:`<div class="widget-pred-wait">WAIT</div>`; } const bl=document.getElementById('widgetBallLogo'); if(bl) bl.src=getServer()==="size"?"/images/server-prime.png":"/images/server-nova.png"; }
+function renderPredCard(d){ const call=(d.prediction||"WAIT").toUpperCase(),conf=Math.round(d.confidence||0),wr=Math.round(d.win_rate||0),badge=d.badge||"—",period=d.period||"—",meta=CALL_META[call],lvlPct=badgePct(badge),tfSecs=parseTfSecs(predTf)||60,initRem=tfSecs-(Math.floor(Date.now()/1000)%tfSecs),initPct=(initRem/tfSecs)*100,initMins=Math.floor(initRem/60),initSecs=initRem%60,initStr=initMins>0?`${initMins}:${String(initSecs).padStart(2,'0')}`:`${initSecs}s`; let imageUI=`<div class="pred-img-wait"><i class="fa-solid fa-clock" style="margin-right:10px;"></i> WAIT</div>`; if(meta) imageUI=`<img src="${meta.img}" class="pred-img-large" alt="${call}">`; return `<div class="pred-image-container">${imageUI}</div><div style="display:flex;justify-content:center;width:100%;"><div class="pred-period-badge"><i class="fa-solid fa-hashtag"></i> Period : ${period}</div></div><div class="pred-card-main"><div class="pill-progress-card"><div class="pill-progress-header"><span class="pill-progress-lbl">Confidence</span><span class="pill-progress-text">${conf}%</span></div><div class="pill-track"><div class="pill-fill" style="width:${conf}%"></div></div></div><div class="pred-meters-row"><div class="pred-meter-card"><div class="pred-meter-ring">${buildSmallRing(lvlPct,"#7C5CFC","")}<div class="pred-meter-val">${badge}<div class="pred-meter-sub">Level</div></div></div><span class="pred-meter-lbl">Level</span></div><div class="pred-meter-card"><div class="pred-meter-ring">${buildSmallRing(wr,"#7C5CFC","")}<div class="pred-meter-val">${wr}%<div class="pred-meter-sub">WR</div></div></div><span class="pred-meter-lbl">Win Rate</span></div><div class="pred-meter-card"><div class="pred-meter-ring"><svg viewBox="0 0 68 68" style="position:absolute;inset:0;width:100%;height:100%"><circle cx="34" cy="34" r="${R_SM}" fill="none" stroke="#e2e8f0" stroke-width="11"/><circle id="tmr-fill" cx="34" cy="34" r="${R_SM}" fill="none" stroke="#7C5CFC" stroke-width="11" stroke-linecap="round" stroke-dasharray="${CIRC_SM.toFixed(2)}" stroke-dashoffset="${(CIRC_SM-(initPct/100)*CIRC_SM).toFixed(2)}" transform="rotate(-90 34 34)" style="transition:stroke-dashoffset .5s ease"/></svg><div class="pred-meter-val" id="tmr-val">${initStr}<div class="pred-meter-sub">left</div></div></div><span class="pred-meter-lbl">Timer</span></div></div></div>`; }
+function applyServerUI(){ const s=getServer(),isColor=s==="color",c=document.getElementById("srvColor"),z=document.getElementById("srvSize"); if(!c||!z) return; const drago=dragoActive(); c.classList.toggle("active",isColor&&!drago); z.classList.toggle("active",!isColor&&!drago); [c,z].forEach(el=>{ el.style.position="relative"; let lock=el.querySelector(".srv-lock"); if(!isPaid){ el.style.opacity="0.6"; if(!lock){ lock=document.createElement("span"); lock.className="srv-lock"; lock.innerHTML='<i class="fa-solid fa-lock"></i>'; lock.style.cssText="position:absolute;top:6px;right:8px;font-size:11px;color:#7C5CFC;"; el.appendChild(lock); } } else { el.style.opacity="1"; if(lock) lock.remove(); } }); }
+/* ═══════════════════════════════════════════════════════════════════
+   PREMIUM (.drago) — CLIENT-SIDE CALCULATION ENGINE
+   User apni .drago file upload karta hai (sirf calculation/method, koi API
+   nahi). Data wahi server se aata hai (/api/results-history & /api/results-latest),
+   par PREDICTION device par hi .drago ke method se banti hai. Free + paid dono.
+   ═══════════════════════════════════════════════════════════════════ */
+function dgColorLetter(n){ n=+n; return (n===1||n===3||n===5||n===7||n===9)?'G':'R'; }
+function dgSizeLetter(n){ return (+n>=5)?'B':'S'; }
+function dgNextPeriod(p){ try{ return (BigInt(String(p).trim())+1n).toString(); }catch(e){ const x=parseInt(p,10); return isNaN(x)?String(p):String(x+1); } }
+function dgLevelBadge(lv){ return ({1:"🟢L1",2:"🟡L2",3:"🟠L3",4:"🔴L4"})[lv]||"🟢L1"; }
+
+/* Loaded .drago file (parsed). null => premium off. */
+function dragoFile(){ try{ return JSON.parse(localStorage.getItem("_drago")||"null"); }catch(e){ return null; } }
+function dragoActive(){ return localStorage.getItem("_drago_on")==="1" && !!dragoFile(); }
+function setDragoActive(on){ localStorage.setItem("_drago_on", on?"1":"0"); }
+/* .drago file khud apna target decide karti hai (color / size / both).
+   "both" hone par user choti toggle se switch kar sakta hai. */
+function dragoTargetMode(){ const f=dragoFile()||{}; let t=(f.target||(f.config&&f.config.target)||"color").toString().toLowerCase();
+  if(t==="size"||t==="big"||t==="bigsmall"||t==="big-small"||t==="prime") return "size";
+  if(t==="both"||t==="any"||t==="all") return "both";
+  return "color"; }
+function dragoTarget(){ const m=dragoTargetMode(); if(m!=="both") return m; return localStorage.getItem("_drago_tgt")==="size"?"size":"color"; }
+function setDragoTarget(t){ localStorage.setItem("_drago_tgt", t==="size"?"size":"color"); }
+
+/* Method 1 — SELF LEARNING (server.py ka exact algorithm, browser me port) */
+function dgSelfLearning(cfg, target, nums){
+  const CL=cfg.context_lengths||[1,2,3,4], MIN=cfg.min_observations||2,
+        DECAY=cfg.decay||0.96, ALPHA=cfg.ewma_alpha||0.30,
+        FLOOR=cfg.conf_floor||50, CAP=cfg.conf_cap||92,
+        SWITCH=cfg.loss_switch_bias||[0,0.10,0.22,0.35];
+  const letter=(n)=>target==='color'?dgColorLetter(n):dgSizeLetter(n);
+  const label =(l)=>target==='color'?(l==='G'?'GREEN':'RED'):(l==='B'?'BIG':'SMALL');
+  let mem={}, hist=[], wins=0, total=0, consec=0, level=1, pending=null;
+  const cell=(p,l)=>{ (mem[p]=mem[p]||{}); return (mem[p][l]=mem[p][l]||{w:0,l:0,total:0,wt:0,acc:0.5,plays:0}); };
+  const opp=()=>{ if(!hist.length) return target==='color'?'G':'B'; const last=hist[hist.length-1];
+    return target==='color'?(last==='G'?'R':'G'):(last==='B'?'S':'B'); };
+  function fallback(sb,op){ const recent=hist.slice(-20), a=target==='color'?'G':'B', b=target==='color'?'R':'S';
+    const ca=recent.filter(x=>x===a).length, cb=recent.filter(x=>x===b).length;
+    const sa=ca+(op===a?sb*10:0), sb2=cb+(op===b?sb*10:0), L=sa>=sb2?a:b;
+    const tot=(ca+cb)||1, prob=Math.max(ca,cb)/tot, conf=Math.round(Math.max(FLOOR,Math.min(prob*100,CAP)));
+    return {pattern:'*',pred_letter:L,label:label(L),conf}; }
+  function predictNext(){ const sb=SWITCH[level-1]||0, op=opp(); let best=null,bs=-1;
+    for(const Lc of CL){ if(hist.length<Lc) continue; const pat=hist.slice(-Lc).join(''); const counts=mem[pat]; if(!counts) continue;
+      let wtAll=0; for(const k in counts) wtAll+=counts[k].wt; if(!wtAll) wtAll=1;
+      for(const lt in counts){ const s=counts[lt]; if(s.total<MIN) continue;
+        const freq=s.wt/wtAll, wAcc=Math.min(s.plays,8)/8;
+        let prob=(1-wAcc)*freq + wAcc*(0.5*freq+0.5*s.acc);
+        prob += (lt!==op? -sb*0.5 : sb*0.5); prob=Math.max(0.01,Math.min(prob,0.99));
+        const score=prob*Math.log(s.wt+1.5)*(1+Lc*0.06);
+        if(score>bs){ bs=score; best={pattern:pat,pred_letter:lt,label:label(lt),conf:Math.round(Math.max(FLOOR,Math.min(prob*100,CAP)))}; } } }
+    if(!best && hist.length>=1) best=fallback(sb,op); return best; }
+  for(const rec of nums){ const n=+rec.number, al=letter(n);
+    if(pending){ const correct=pending.label===label(al); total++; if(correct) wins++;
+      const e=cell(pending.pattern,pending.pred_letter); correct?e.w++:e.l++; e.plays++;
+      e.acc=(1-ALPHA)*e.acc+ALPHA*(correct?1:0);
+      if(correct){ consec=0; level=1; } else { consec++; level=Math.min(consec+1,4); } pending=null; }
+    for(const Lc of CL){ if(hist.length>=Lc){ const pat=hist.slice(-Lc).join('');
+      mem[pat]=mem[pat]||{}; for(const k in mem[pat]) mem[pat][k].wt*=DECAY; const c=cell(pat,al); c.total++; c.wt+=1; } }
+    hist.push(al); pending=predictNext(); }
+  const wr=total?Math.round(wins/total*1000)/10:0, lastP=nums[nums.length-1].period, np=dgNextPeriod(lastP);
+  if(pending) return {prediction:pending.label,confidence:pending.conf,win_rate:wr,badge:dgLevelBadge(level),period:np};
+  return {prediction:"WAIT",confidence:0,win_rate:wr,badge:dgLevelBadge(level),period:np}; }
+
+/* Method 2 — FREQUENCY (recent window me jo zyada aaya wahi) */
+function dgFrequency(cfg, target, nums){
+  const W=cfg.window||30, FLOOR=cfg.conf_floor||50, CAP=cfg.conf_cap||92;
+  const letter=(n)=>target==='color'?dgColorLetter(n):dgSizeLetter(n);
+  const label =(l)=>target==='color'?(l==='G'?'GREEN':'RED'):(l==='B'?'BIG':'SMALL');
+  const a=target==='color'?'G':'B', b=target==='color'?'R':'S';
+  let wins=0,total=0;
+  const predAt=(arr)=>{ const w=arr.slice(-W); const ca=w.filter(x=>x===a).length, cb=w.filter(x=>x===b).length;
+    if(!w.length) return null; const L=ca>=cb?a:b, prob=Math.max(ca,cb)/((ca+cb)||1);
+    return {L,conf:Math.round(Math.max(FLOOR,Math.min(prob*100,CAP)))}; };
+  const seq=[];
+  for(const rec of nums){ const al=letter(+rec.number);
+    const p=predAt(seq); if(p){ total++; if(label(p.L)===label(al)) wins++; } seq.push(al); }
+  const p=predAt(seq), wr=total?Math.round(wins/total*1000)/10:0, np=dgNextPeriod(nums[nums.length-1].period);
+  if(p) return {prediction:label(p.L),confidence:p.conf,win_rate:wr,badge:"🟢L1",period:np};
+  return {prediction:"WAIT",confidence:0,win_rate:wr,badge:"🟢L1",period:np}; }
+
+/* Method 3 — STREAK (chalti hui streak ka continuation / reversal) */
+function dgStreak(cfg, target, nums){
+  const mode=(cfg.streak_mode||"reverse"), TH=cfg.streak_threshold||2,
+        FLOOR=cfg.conf_floor||50, CAP=cfg.conf_cap||92;
+  const letter=(n)=>target==='color'?dgColorLetter(n):dgSizeLetter(n);
+  const label =(l)=>target==='color'?(l==='G'?'GREEN':'RED'):(l==='B'?'BIG':'SMALL');
+  const flip=(l)=>target==='color'?(l==='G'?'R':'G'):(l==='B'?'S':'B');
+  let wins=0,total=0;
+  const predAt=(arr)=>{ if(!arr.length) return null; const last=arr[arr.length-1]; let run=0;
+    for(let i=arr.length-1;i>=0&&arr[i]===last;i--) run++;
+    let L=last; if(run>=TH){ L=(mode==="reverse")?flip(last):last; }
+    const conf=Math.round(Math.max(FLOOR,Math.min((0.5+Math.min(run,5)*0.08)*100,CAP)));
+    return {L,conf}; };
+  const seq=[];
+  for(const rec of nums){ const al=letter(+rec.number);
+    const p=predAt(seq); if(p){ total++; if(label(p.L)===label(al)) wins++; } seq.push(al); }
+  const p=predAt(seq), wr=total?Math.round(wins/total*1000)/10:0, np=dgNextPeriod(nums[nums.length-1].period);
+  if(p) return {prediction:label(p.L),confidence:p.conf,win_rate:wr,badge:"🟢L1",period:np};
+  return {prediction:"WAIT",confidence:0,win_rate:wr,badge:"🟢L1",period:np}; }
+
+/* Method 4 — ADVANCED MULTI-LAYER ENSEMBLE
+   Ek "bada" calculation: kai independent layers (Markov context 1-5,
+   multi-window frequency, streak/anti-streak, EWMA bias, alternation).
+   Har layer apni online accuracy track karta hai aur uske hisaab se uska
+   vote weight milta hai (self-weighting soft-vote). Jitne zyada layers
+   agree karein, confidence utni high. Multi-layer = zyada stable. */
+function dgAdvanced(cfg, target, nums){
+  const CL=cfg.context_lengths||[1,2,3,4,5], WINS=cfg.windows||[8,20,40,80],
+        FLOOR=cfg.conf_floor||52, CAP=cfg.conf_cap||94, MIN=cfg.min_observations||2,
+        DECAY=cfg.decay||0.97, SMOOTH=cfg.laplace||0.5, ALPHA=cfg.ewma_alpha||0.25,
+        STH=cfg.streak_threshold||3, LRATE=cfg.layer_lr||0.04;
+  const A=target==='color'?'G':'B', B=target==='color'?'R':'S';
+  const letter=(n)=>target==='color'?dgColorLetter(n):dgSizeLetter(n);
+  const label =(l)=>target==='color'?(l==='G'?'GREEN':'RED'):(l==='B'?'BIG':'SMALL');
+  const seq=[]; let markov={}, ewma=0.5, wins=0, total=0, consec=0, level=1, pending=null;
+  /* layer accuracy (EWMA) — har layer ka weight isi se banta */
+  const lw={}; const names=[]; CL.forEach(n=>names.push("mk"+n)); WINS.forEach(w=>names.push("fr"+w)); names.push("streak","ewma","alt");
+  names.forEach(n=>lw[n]={acc:0.5,n:0});
+  function mkCell(p){ markov[p]=markov[p]||{}; markov[p][A]=markov[p][A]||0; markov[p][B]=markov[p][B]||0; return markov[p]; }
+  /* har layer ka {pick, prob} (prob = us pick ki probability 0.5-1) */
+  function layerVotes(){ const v={};
+    for(const n of CL){ if(seq.length<n){ v["mk"+n]=null; continue; } const p=seq.slice(-n).join(''), c=markov[p];
+      if(!c||(c[A]+c[B])<MIN){ v["mk"+n]=null; continue; } const tot=c[A]+c[B]+2*SMOOTH, pa=(c[A]+SMOOTH)/tot, pk=pa>=0.5?A:B; v["mk"+n]={pick:pk,prob:Math.max(pa,1-pa)}; }
+    for(const w of WINS){ const arr=seq.slice(-w); if(!arr.length){ v["fr"+w]=null; continue; } const ca=arr.filter(x=>x===A).length, cb=arr.length-ca, pk=ca>=cb?A:B; v["fr"+w]={pick:pk,prob:Math.max(ca,cb)/arr.length}; }
+    if(seq.length){ let run=1; const last=seq[seq.length-1]; for(let i=seq.length-2;i>=0&&seq[i]===last;i--) run++;
+      const pk=run>=STH?(last===A?B:A):last; v.streak={pick:pk,prob:Math.min(0.5+Math.min(run,6)*0.07,0.95)}; } else v.streak=null;
+    { const pk=ewma>=0.5?A:B; v.ewma={pick:pk,prob:Math.max(ewma,1-ewma)}; }
+    if(seq.length>=2){ const a=seq[seq.length-1],b=seq[seq.length-2]; const pk=a!==b?(a===A?B:A):a; v.alt={pick:pk,prob:0.58}; } else v.alt=null;
+    return v; }
+  function aggregate(v){ let sa=0,sb=0,agreeA=0,agreeB=0,active=0;
+    for(const n in v){ const vote=v[n]; if(!vote) continue; const wgt=Math.max(0.05,lw[n].acc); const s=(vote.prob-0.5)*2*wgt; active++;
+      if(vote.pick===A){ sa+=s; agreeA++; } else { sb+=s; agreeB++; } }
+    if(!active) return null; const pickA=sa>=sb, pick=pickA?A:B, lead=Math.abs(sa-sb), agree=(pickA?agreeA:agreeB)/active;
+    let conf=50+lead*22+agree*14; conf=Math.round(Math.max(FLOOR,Math.min(conf,CAP)));
+    return {pick,conf}; }
+  for(const rec of nums){ const al=letter(+rec.number);
+    if(pending){ const v=pending.votes; total++; const correct=pending.pick===al; if(correct) wins++;
+      for(const n in v){ const vote=v[n]; if(!vote) continue; const hit=vote.pick===al?1:0; lw[n].acc=(1-LRATE)*lw[n].acc+LRATE*hit; lw[n].n++; }
+      if(correct){ consec=0; level=1; } else { consec++; level=Math.min(consec+1,4); } }
+    /* update markov with decay */
+    for(const n of CL){ if(seq.length>=n){ const p=seq.slice(-n).join(''); const c=mkCell(p); c[A]*=DECAY; c[B]*=DECAY; c[al]+=1; } }
+    ewma=(1-ALPHA)*ewma+ALPHA*(al===A?1:0); seq.push(al);
+    const v=layerVotes(), agg=aggregate(v); pending=agg?{pick:agg.pick,conf:agg.conf,votes:v}:null; }
+  const wr=total?Math.round(wins/total*1000)/10:0, np=dgNextPeriod(nums[nums.length-1].period);
+  if(pending) return {prediction:label(pending.pick),confidence:pending.conf,win_rate:wr,badge:dgLevelBadge(level),period:np};
+  return {prediction:"WAIT",confidence:0,win_rate:wr,badge:dgLevelBadge(level),period:np}; }
+
+/* Method 5 — CUSTOM CODE: .drago file ke andar likha hua aapka apna JS engine chalata hai.
+   File me "method":"custom" aur ek "code" string ho. Code ko ye milta hai:
+     data.results   -> newest-first list [{issue,period,number,color,colors,primary,size}]
+     data.history   -> oldest-first wahi list
+     data.apiData   -> {data:{list:[...]}}  (DragoAnalyzer style — paste-and-run compatible)
+     data.target    -> 'color' | 'size'
+     helpers        -> {colorOf,sizeOf,nextPeriod}
+   Code return kare in me se koi bhi shape:
+     {prediction:"GREEN"} | {color:"green"} | {size:"big"}
+     ya DragoAnalyzer.analyze() jaisa {prediction:{color,confidence,reason}}.
+   NOTE: code aapki khud ki uploaded file se aata hai (aapka apna calculation),
+   isliye ise client-side run kiya jata hai. */
+/* Custom-engine win/loss + level tracking — localStorage me persist hota hai
+   (key game+timeframe+target ke hisaab se alag), taaki tab close/reopen karne
+   par bhi win-rate aur level history bani rahe. */
+function dgCustomStatsKey(target){ return "_drago_custom_stats_"+(predGame||"g")+"_"+(predTf||"t")+"_"+target; }
+function dgCustomLoadStats(target){
+  try{ const raw=localStorage.getItem(dgCustomStatsKey(target)); if(!raw) return {wins:0,total:0,consec:0,level:1,pendingPeriod:null,pendingPred:null};
+    const s=JSON.parse(raw); return Object.assign({wins:0,total:0,consec:0,level:1,pendingPeriod:null,pendingPred:null},s); }
+  catch(e){ return {wins:0,total:0,consec:0,level:1,pendingPeriod:null,pendingPred:null}; } }
+function dgCustomSaveStats(target,s){ try{ localStorage.setItem(dgCustomStatsKey(target),JSON.stringify(s)); }catch(e){} }
+function dgCustom(drago, target, nums){
+  const np=dgNextPeriod(nums[nums.length-1].period);
+  const code=(drago.code||drago.script||drago.js||"").toString();
+  if(!code.trim()) return {prediction:"WAIT",confidence:0,win_rate:0,badge:"🟢L1",period:np,reason:"File me 'code' nahi mila."};
+  const rich=nums.map(r=>{ const num=+r.number;
+    const colors=(num===0)?['red','violet']:(num===5)?['green','violet']:(num%2===0?['red']:['green']);
+    return { issue:String(r.period), issueNumber:String(r.period), period:String(r.period), number:num,
+      color:colors.join(','), colors:colors, primary:colors[0], size:(num>=5?'big':'small') }; });
+  const newestFirst=rich.slice().reverse();
+
+  /* Pichli baar jo prediction bani thi (pendingPeriod/pendingPred), use ab
+     latest actual result se compare karo aur wins/total/level update karo —
+     yahi piece pehle missing thi isliye level + win-rate kabhi badalte nahi the. */
+  let stats=dgCustomLoadStats(target);
+  const lastActual=rich[rich.length-1]; // sabse naya actual result jo aa chuka hai
+  if(lastActual && stats.pendingPeriod!==null && String(stats.pendingPeriod)===String(lastActual.period)){
+    const actualLabel = target==='color' ? (lastActual.colors[0]) : lastActual.size; // 'green'/'red' ya 'big'/'small'
+    const predLabel=(stats.pendingPred||"").toString().toLowerCase();
+    const correct = predLabel && actualLabel && predLabel.indexOf(actualLabel.slice(0,1))===0 || predLabel===actualLabel;
+    stats.total++;
+    if(correct){ stats.wins++; stats.consec=0; stats.level=1; } else { stats.consec++; stats.level=Math.min(stats.consec+1,4); }
+    stats.pendingPeriod=null; stats.pendingPred=null;
+  }
+
+  const data={ results:newestFirst, newestFirst:newestFirst, history:rich, target:target,
+    apiData:{ data:{ list:newestFirst.map(x=>({issueNumber:x.issue,number:String(x.number),color:x.color})) } } };
+  const helpers={ colorOf:(n)=>dgColorLetter(n)==='G'?'green':'red', sizeOf:(n)=>dgSizeLetter(n)==='B'?'big':'small', nextPeriod:dgNextPeriod };
+  let out=null;
+  try{
+    const runner=new Function('data','helpers','"use strict";\n'+code+
+      '\nreturn (typeof dragoPredict==="function")?dragoPredict(data,helpers)'+
+      ':(typeof predict==="function")?predict(data,helpers)'+
+      ':(typeof analyze==="function")?analyze(data.apiData)'+
+      ':(typeof DragoAnalyzer!=="undefined"&&DragoAnalyzer.analyze)?DragoAnalyzer.analyze(data.apiData):null;');
+    out=runner(data,helpers);
+  }catch(e){ console.log("[v0] custom .drago error:",e&&e.message);
+    dgCustomSaveStats(target,stats);
+    return {prediction:"WAIT",confidence:0,win_rate:stats.total?Math.round(stats.wins/stats.total*1000)/10:0,badge:dgLevelBadge(stats.level),period:np,reason:"Code error: "+((e&&e.message)||"unknown")}; }
+  const res=dgNormalizeCustom(out,target,np,stats);
+
+  /* Naye prediction ko "pending" mark karo taaki agle round me actual result
+     aane par usse compare karke wins/level update kiya ja sake. */
+  if(res.prediction && res.prediction!=="WAIT"){ stats.pendingPeriod=np; stats.pendingPred=res.prediction.toLowerCase(); }
+  dgCustomSaveStats(target,stats);
+  return res;
+}
+function dgNormalizeCustom(out,target,np,stats){
+  const wr = stats && stats.total ? Math.round(stats.wins/stats.total*1000)/10 : 0;
+  const badge = stats ? dgLevelBadge(stats.level) : "🟢L1";
+  const wrap=(p,c,extra)=>Object.assign({prediction:p,confidence:Math.round(Math.max(0,Math.min(c||0,99))),win_rate:wr,badge:badge,period:np},extra||{});
+  if(!out||typeof out!=="object") return wrap("WAIT",0);
+  let o=out; if(o.prediction&&typeof o.prediction==="object") o=o.prediction;
+  const conf=o.confidence||o.conf||out.confidence||0, reason=o.reason||out.reason||"";
+  const v=(o.prediction||o.color||o.size||o.result||"").toString().toLowerCase().trim();
+  let pred=null;
+  if(target==='color'){ if(v.includes('green')||v==='g') pred='GREEN'; else if(v.includes('red')||v==='r') pred='RED'; }
+  else { if(v.includes('big')||v==='b') pred='BIG'; else if(v.includes('small')||v==='s') pred='SMALL'; }
+  if(!pred) return wrap("WAIT",0,{reason:reason});
+  return wrap(pred,conf||55,{reason:reason});
+}
+
+/* Dispatcher — .drago file ka "method" choose karta hai (default self-learning) */
+function runDragoEngine(drago, target, nums){
+  if(!drago||!nums||!nums.length) return null;
+  const cfg=drago.config||{}, method=(drago.method||drago.engine||"self-learning").toLowerCase();
+  const hasCode=!!(drago.code||drago.script||drago.js);
+  if(method==="custom"||method==="code"||hasCode) return dgCustom(drago,target,nums);
+  if(method==="frequency") return dgFrequency(cfg,target,nums);
+  if(method==="streak")    return dgStreak(cfg,target,nums);
+  if(method==="advanced"||method==="multi-layer"||method==="multilayer"||method==="ensemble"||method==="pro") return dgAdvanced(cfg,target,nums);
+  return dgSelfLearning(cfg,target,nums);
+}
+
+/* Premium prediction loader — server prediction ki jagah .drago se banata hai */
+async function loadPredictionPremium(body){
+  if(!predGame||!predTf){ body.innerHTML=`<div class="pred-msg-box"><span class="pred-msg-ic">📊</span><span class="pred-msg-txt">Is game ke liye prediction available nahi hai.</span></div>`; return; }
+  const a=auth(); if(!a){ goLogin(); return; }
+  const drago=dragoFile();
+  try{
+    const dh=await withRefresh(()=>apiFetch("/api/results-history",{uid:a.uid,session_signature:a.session_signature,game:predGame,timeframe:predTf,limit:200}));
+    if(!dh) return;
+    let results=(dh.result&&dh.result.results)||[];
+    // FIX: pehle yahan khaali catch(e){} tha jo /api/results-latest fail hone par
+    // bina kisi retry ke purani/stale data par hi prediction chala deta tha —
+    // isi wajah se loss ke baad kabhi-kabhi prediction "update" nahi hoti thi.
+    // Ab 3 attempts tak retry karte hain taaki latest round ka result zaroor mile.
+    let dl=null, latestErr=null;
+    for(let attempt=0; attempt<3 && !dl; attempt++){
+      try{ dl=await withRefresh(()=>apiFetch("/api/results-latest",{uid:a.uid,session_signature:a.session_signature,game:predGame,timeframe:predTf})); }
+      catch(e){ latestErr=e; if(attempt<2) await new Promise(r=>setTimeout(r,400)); }
+    }
+    if(latestErr && !dl) console.warn("[v0] results-latest fetch failed after retries — prediction may use slightly stale data:", latestErr&&latestErr.message);
+    if(dl&&dl.result&&dl.result.period){ const lp=String(dl.result.period);
+      if(!results.length||String(results[results.length-1].period)!==lp){ results=results.concat([{period:lp,number:dl.result.number}]); } }
+    if(!results.length){ body.innerHTML=`<div class="pred-msg-box"><span class="pred-msg-ic">⏳</span><span class="pred-msg-txt">Premium engine warm ho raha hai...<br>Thodi der baad try karo.</span></div>`; return; }
+    const res=runDragoEngine(drago,dragoTarget(),results);
+    if(!res||!res.prediction){ body.innerHTML=`<div class="pred-msg-box"><span class="pred-msg-ic">⏳</span><span class="pred-msg-txt">Premium engine warm ho raha hai...<br>Thodi der baad try karo.</span></div>`; return; }
+    body.innerHTML=renderPredCard(res); startTimerTick(); updateFloatingWidget(res);
+  }catch(e){ body.innerHTML=`<div class="pred-msg-box"><span class="pred-msg-ic">🔄</span><span class="pred-msg-txt">Premium prediction load nahi ho payi.<br>Auto-retry ho rahi hai...</span></div>`; }
+}
+
+async function loadPrediction(){ const body=document.getElementById("predBody"); if(dragoActive()){ return loadPredictionPremium(body); } if(!predGame||!predTf){ body.innerHTML=`<div class="pred-msg-box"><span class="pred-msg-ic">📊</span><span class="pred-msg-txt">Is game ke liye prediction available nahi hai.</span></div>`; return; } const a=auth(); if(!a){ goLogin(); return; } if(!isPaid){ body.innerHTML=`<div class="pred-msg-box"><span class="pred-msg-ic">🧮</span><span class="pred-msg-txt"><b style="color:#7C5CFC">PRIME &amp; NOVA</b> servers sirf paid plan ke liye hain.<br>Free mein apni <b>.drago calculation file</b> use karo.</span><button class="pred-upgrade-btn" id="freeAttachBtn"><i class="fa-solid fa-folder-open"></i> Use My Calculation</button><a class="pred-upgrade-btn" style="margin-top:8px;background:transparent;border:1.5px solid #7C5CFC;color:#7C5CFC;" href="/payment"><i class="fa-solid fa-crown"></i> Upgrade for Servers</a></div>`; const fb=document.getElementById("freeAttachBtn"); if(fb) fb.addEventListener("click",()=>{ const inp=document.getElementById("dragoFile"); if(inp){ inp.value=""; inp.click(); } }); stopTimerTick(); return; } try{ const d=await withRefresh(()=>apiFetch("/api/prediction",{uid:a.uid,session_signature:a.session_signature,game:predGame,timeframe:predTf,target:getServer()})); if(!d) return; const res=d.result||{}; if(!res||!res.prediction){ body.innerHTML=`<div class="pred-msg-box"><span class="pred-msg-ic">⏳</span><span class="pred-msg-txt">Engine warm ho raha hai...<br>Thodi der baad try karo.</span></div>`; return; } body.innerHTML=renderPredCard(res); startTimerTick(); updateFloatingWidget(res); }catch(e){ if(e&&e.status===403){ const msg=(e.detail||"").toString(); if(msg.indexOf("upgrade")>=0){ body.innerHTML=`<div class="pred-msg-box"><span class="pred-msg-ic" style="font-size:40px">🔒</span><span class="pred-msg-txt">Prediction sirf <b style="color:#7C5CFC">paid plan</b> ke saath milti hai.<br>Free plan mein sirf games access hain.</span><a class="pred-upgrade-btn" href="/payment"><i class="fa-solid fa-crown"></i> Upgrade Plan</a></div>`; checkAndManagePoll(); return; } return; } body.innerHTML=`<div class="pred-msg-box"><span class="pred-msg-ic">🔄</span><span class="pred-msg-txt">Prediction load nahi ho payi.<br>Auto-retry ho rahi hai...</span></div>`; } }
+function shouldPollPredictions(){ return (activePanel==="hack")||document.getElementById("injectorToggle").checked; }
+function checkAndManagePoll(){ applyServerUI(); if(shouldPollPredictions()){ if(!predTmr){ loadPrediction(); predTmr=setInterval(loadPrediction,10000); } }else{ if(predTmr){ clearInterval(predTmr); predTmr=null; } stopTimerTick(); } }
+function wireServerSelect(){ document.querySelectorAll(".server-select-btn").forEach(el=>{ el.addEventListener("click",()=>{ if(!isPaid){ showToast("PRIME & NOVA sirf paid plan ke liye. Free mein apni .drago calculation file use karo."); return; } if(dragoActive()){ setDragoActive(false); renderDragoStatus(); showToast("Aapki calculation off. Ab server prediction chalegi."); } setServer(el.dataset.srv); applyServerUI(); const body=document.getElementById("predBody"); if(body) body.innerHTML=`<div class="pred-loading"><div class="spinner"></div><span class="loader-text">Switching server...</span></div>`; loadPrediction(); }); }); }
+function makeElementDraggable(el){ let p1=0,p2=0,p3=0,p4=0,isDrag=false; el.addEventListener('mousedown',mDown); el.addEventListener('touchstart',tStart,{passive:false}); function mDown(e){ if(e.target.tagName==='BUTTON'||e.target.closest('button')) return; isDrag=false; p3=e.clientX; p4=e.clientY; document.addEventListener('mouseup',close); document.addEventListener('mousemove',mMove); } function tStart(e){ if(e.target.tagName==='BUTTON'||e.target.closest('button')) return; isDrag=false; p3=e.touches[0].clientX; p4=e.touches[0].clientY; document.addEventListener('touchend',close); document.addEventListener('touchmove',tMove,{passive:false}); } function mMove(e){ e.preventDefault(); isDrag=true; p1=p3-e.clientX; p2=p4-e.clientY; p3=e.clientX; p4=e.clientY; move(el.offsetTop-p2,el.offsetLeft-p1); } function tMove(e){ e.preventDefault(); isDrag=true; const t=e.touches[0]; p1=p3-t.clientX; p2=p4-t.clientY; p3=t.clientX; p4=t.clientY; move(el.offsetTop-p2,el.offsetLeft-p1); } function move(top,left){ el.style.top=Math.max(0,Math.min(top,window.innerHeight-el.offsetHeight))+"px"; el.style.left=Math.max(0,Math.min(left,window.innerWidth-el.offsetWidth))+"px"; } function close(){ document.removeEventListener('mouseup',close); document.removeEventListener('mousemove',mMove); document.removeEventListener('touchend',close); document.removeEventListener('touchmove',tMove); if(!isDrag){ const ball=document.getElementById('widgetBall'),card=document.getElementById('widgetCard'); if(ball&&ball.style.display!=='none'){ ball.style.display='none'; card.style.display='flex'; } } } }
+function wireInjectorToggle(){ const toggle=document.getElementById('injectorToggle'),widget=document.getElementById('injectorWidget'),card=document.getElementById('widgetCard'),ball=document.getElementById('widgetBall'); toggle.addEventListener('change',()=>{ if(toggle.checked){ widget.style.display='block'; card.style.display='flex'; ball.style.display='none'; }else{ widget.style.display='none'; } checkAndManagePoll(); }); document.getElementById('widgetExitBtn').addEventListener('click',()=>{ widget.style.display='none'; toggle.checked=false; checkAndManagePoll(); }); document.getElementById('widgetHideBtn').addEventListener('click',()=>{ card.style.display='none'; ball.style.display='flex'; }); makeElementDraggable(widget); }
+const fabContainer=document.getElementById("fabContainer"),fabToggle=document.getElementById("fabToggle"),fabLeft=document.getElementById("fabLeft"),fabRight=document.getElementById("fabRight"),hackBtn=document.getElementById("hackBtn"),settingBtn=document.getElementById("settingBtn"),overlay=document.getElementById("panelOverlay"),hackPanel=document.getElementById("hackPanel"),settingPanel=document.getElementById("settingPanel");
+let fabOpen=false,activePanel=null;
+function openFab(){ fabOpen=true; fabContainer.classList.add("open"); fabToggle.classList.add("open"); fabLeft.classList.add("show"); fabRight.classList.add("show"); }
+function closeFab(){ fabOpen=false; fabContainer.classList.remove("open"); fabToggle.classList.remove("open"); fabLeft.classList.remove("show"); fabRight.classList.remove("show"); }
+function openPanel(which){ activePanel=which; overlay.classList.add("show"); if(which==="hack"){ hackPanel.classList.add("show"); settingPanel.classList.remove("show"); }else{ settingPanel.classList.add("show"); hackPanel.classList.remove("show"); } checkAndManagePoll(); }
+function closePanel(){ overlay.classList.remove("show"); hackPanel.classList.remove("show"); settingPanel.classList.remove("show"); activePanel=null; checkAndManagePoll(); }
+fabToggle.addEventListener("click",()=>{ fabOpen?(closeFab(),closePanel()):openFab(); });
+hackBtn.addEventListener("click",()=>{ openPanel("hack"); });
+settingBtn.addEventListener("click",()=>{ openPanel("setting"); });
+overlay.addEventListener("click",()=>{ closePanel(); });
+function renderDragoStatus(){ const el=document.getElementById("dragoStatus"); if(!el) return; const f=dragoFile();
+  if(dragoActive()&&f){ const nm=f.name||"Premium Calculation", mth=(f.method||f.engine||"self-learning").toLowerCase(), both=dragoTargetMode()==="both", tgt=dragoTarget();
+    const tbtn=(t,lbl)=>`<button class="drago-tgt-btn" data-tgt="${t}" style="flex:1;padding:8px;border-radius:10px;font-weight:800;font-size:11px;cursor:pointer;border:1.5px solid ${tgt===t?'#7C5CFC':'rgba(124,92,252,0.3)'};background:${tgt===t?'rgba(124,92,252,0.15)':'transparent'};color:${tgt===t?'#7C5CFC':'#a78bfa'};">${lbl}</button>`;
+    const toggle = both ? `<div style="display:flex;gap:8px;margin-top:10px;">${tbtn('color','GREEN / RED')}${tbtn('size','BIG / SMALL')}</div>` : `<div style="font-size:10px;color:#a78bfa;font-weight:700;margin-top:6px;">Target: ${tgt==='size'?'BIG / SMALL':'GREEN / RED'}</div>`;
+    el.style.display="block";
+    el.innerHTML=`<div style="background:rgba(124,92,252,0.12);border:1px solid rgba(124,92,252,0.4);border-radius:14px;padding:10px 12px;margin-top:10px;"><div style="display:flex;align-items:center;gap:10px;"><i class="fa-solid fa-circle-check" style="color:#22c55e;font-size:18px;"></i><div style="flex:1;min-width:0;"><div style="font-weight:800;font-size:12px;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${nm}</div><div style="font-size:10px;color:#a78bfa;font-weight:700;">PREMIUM ACTIVE · ${mth}</div></div><button id="dragoRemoveBtn" style="background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.4);color:#ef4444;font-weight:800;font-size:11px;padding:6px 10px;border-radius:10px;cursor:pointer;">Remove</button></div>${toggle}</div>`;
+    const rb=document.getElementById("dragoRemoveBtn"); if(rb) rb.addEventListener("click",()=>{ setDragoActive(false); renderDragoStatus(); showToast(isPaid?"Calculation off. Ab server prediction chalegi.":"Calculation off. Free mein dobara file upload karke use karo."); loadPrediction(); });
+    el.querySelectorAll(".drago-tgt-btn").forEach(b=>b.addEventListener("click",()=>{ setDragoTarget(b.dataset.tgt); renderDragoStatus(); loadPrediction(); }));
+  } else { el.style.display="none"; el.innerHTML=""; }
+  applyServerUI(); }
+function wireDrago(){ const btn=document.getElementById("premiumSrvBtn"), inp=document.getElementById("dragoFile");
+  btn.addEventListener("click",()=>{ if(dragoActive()){ showToast("Premium server already active hai. Dusri file ke liye Remove karke wapas upload karo."); return; } inp.value=""; inp.click(); });
+  inp.addEventListener("change",()=>{ const file=inp.files&&inp.files[0]; if(!file) return;
+    if(!/\.drago$/i.test(file.name)){ showToast("Galat file. Sirf .drago file upload karo."); return; }
+    const reader=new FileReader();
+    reader.onload=()=>{ let data=null; try{ data=JSON.parse(reader.result); }catch(e){ data=null; }
+      if(!data||data.drago!==true){ showToast("Invalid .drago file. Calculation file galat ya corrupt hai."); return; }
+      if(!data.name) data.name=file.name.replace(/\.drago$/i,"");
+      localStorage.removeItem("_drago_tgt");
+      localStorage.setItem("_drago",JSON.stringify(data)); setDragoActive(true); renderDragoStatus();
+      showToast("Calculation attached! Prediction ab aapki file se aayegi."); openPanel("hack"); loadPrediction(); };
+    reader.onerror=()=>showToast("File read nahi ho payi. Dobara try karo.");
+    reader.readAsText(file); });
+  renderDragoStatus(); }
+async function init(){ const a=auth(); if(!a){ goLogin(); return; } const params=new URLSearchParams(window.location.search),gameName=params.get("name")||"Game"; gameLink=params.get("link")||""; predGame=(params.get("game")||"").toLowerCase(); predTf=(params.get("tf")||"").toLowerCase(); document.getElementById("heroTitle").textContent=gameName; document.getElementById("fbTitle").textContent=gameName; document.title=gameName+" — Drago Predictor"; applyServerUI(); wireServerSelect(); wireInjectorToggle(); wireDrago(); document.getElementById("backBtn").addEventListener("click",()=>{ window.history.length>1?window.history.back():window.location.href="/game"; }); if(gameLink) document.getElementById("fbBtn").href=gameLink; if(!gameLink){ hideAuthOverlay(); document.getElementById("ovNoLink").classList.add("show"); return; } try{ const d=await withRefresh(()=>apiFetch("/api/account-status",a)); if(!handleStatus(d.account_status||"active",d.subscription_status||"none")){ hideAuthOverlay(); return; } startPoll(); }catch(e){ startPoll(); } hideAuthOverlay(); loadFrame(gameLink); }
+init();
+</script>
+</body>
+</html>

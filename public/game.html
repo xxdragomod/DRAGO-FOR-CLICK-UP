@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Game — Drago Predictor</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+@view-transition{navigation:auto}
+::view-transition-old(root){animation:vtOut .22s cubic-bezier(.4,0,.2,1) both}
+::view-transition-new(root){animation:vtIn .26s cubic-bezier(.22,1,.36,1) both}
+@keyframes vtOut{to{opacity:0;transform:translateY(-8px)}}
+@keyframes vtIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+body{
+  min-height:100vh;
+  background:linear-gradient(180deg,#c3caff 0%,#e2e5ff 40%,#ffffff 100%);
+  font-family:'Montserrat',sans-serif;
+  display:flex;flex-direction:column;align-items:center;
+  padding:20px 14px 110px;
+}
+
+/* ── Page enter animation ── */
+.page-wrap{width:100%;max-width:460px;display:flex;flex-direction:column;align-items:center;animation:fadeUp .4s ease both}
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── Profile banner (same as home.html) ── */
+#profileBanner{display:flex;align-items:center;gap:10px;width:100%;margin-bottom:16px}
+#avatarWrap img{width:46px;height:46px;border-radius:50%;object-fit:cover;display:block}
+.avatar-fallback{width:46px;height:46px;border-radius:50%;background:linear-gradient(135deg,#7C3AED,#5B6AF0);display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:800;color:#fff}
+.profile-info{display:flex;flex-direction:column;line-height:1.3}
+.welcome-text{font-size:11px;font-weight:600;color:#6b7280}
+.user-name{font-size:16px;font-weight:900;color:#1a1a2e;text-transform:uppercase;max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* ── Hero banner (same style as home.html) ── */
+.hero{
+  width:100%;
+  background:#fff;
+  border-radius:24px;
+  padding:22px 20px;
+  box-shadow:0 12px 30px rgba(124,92,252,.12);
+  text-align:center;
+  margin-bottom:22px;
+  display:flex;align-items:center;gap:14px;
+}
+.hero-img{width:54px;height:54px;object-fit:contain;flex-shrink:0}
+.hero-text{text-align:left;flex:1}
+.hero-text h2{font-size:18px;font-weight:900;color:#7C5CFC;margin-bottom:4px}
+.hero-text p{font-size:12px;color:#6b7280;line-height:1.5}
+
+/* ── Section label ── */
+.section-label{width:100%;font-size:11px;font-weight:800;color:#9ca3af;text-transform:uppercase;letter-spacing:.7px;margin-bottom:10px}
+
+/* ── Game selector cards ── */
+.game-selector{
+  width:100%;
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px; 
+  margin-bottom:22px;
+}
+
+.game-card{
+  background:#fff;
+  border-radius:16px;
+  padding:8px 8px 8px;
+  display:flex;flex-direction:column;align-items:center;gap:6px;
+  border:2.5px solid #eef0ff;
+  cursor:pointer;
+  box-shadow:0 6px 18px rgba(0,0,0,.06);
+  transition:transform .22s cubic-bezier(.34,1.56,.64,1), border-color .18s, box-shadow .18s;
+  position:relative;
+  user-select:none;
+  -webkit-tap-highlight-color:transparent;
+}
+.game-card:active{transform:scale(.95)}
+.game-card.selected{
+  border-color:#7C3AED;
+  box-shadow:0 8px 24px rgba(124,58,237,.22);
+  transform:scale(1.03);
+}
+.game-card img{
+  width:100%;height:44px;object-fit:contain;object-position:center;
+  border-radius:10px;transition:transform .3s ease;
+}
+.game-card.selected img{transform:scale(1.04)}
+.game-card-name{font-size:12px;font-weight:900;color:#1a1a2e;text-align:center;line-height:1.3}
+.game-card-sub{font-size:10px;font-weight:700;color:#9ca3af;text-align:center;margin-top:2px}
+
+/* ── Period selector ── */
+.period-section{width:100%;display:none;animation:fadeUp .3s ease both;margin-bottom:22px}
+.period-section.show{display:block}
+.period-box{
+  width:100%;background:#fff;border-radius:18px;padding:14px 16px;
+  box-shadow:0 6px 18px rgba(0,0,0,.06);
+  display:flex;align-items:center;gap:10px;
+}
+.period-clock{
+  width:36px;height:36px;flex-shrink:0;object-fit:contain;
+  filter:drop-shadow(0 3px 6px rgba(0,0,0,.12));
+  animation:spinSlow 8s linear infinite;
+}
+@keyframes spinSlow{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+.period-heading{
+  font-size:14px;font-weight:900;color:#4b5563;
+  letter-spacing:.3px;text-transform:uppercase;flex:1;white-space:nowrap;line-height:1;
+}
+.period-select-wrap{position:relative;flex-shrink:0}
+.period-select{
+  font-family:'Montserrat',sans-serif;
+  font-size:13px;font-weight:900;color:#fff;
+  text-transform:uppercase;letter-spacing:.4px;
+  padding:10px 36px 10px 18px;
+  border:none;border-radius:30px;
+  background:linear-gradient(135deg,#8E97E8,#7C5CFC);
+  cursor:pointer;outline:none;
+  appearance:none;-webkit-appearance:none;
+  box-shadow:0 5px 14px rgba(124,92,252,.32);
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23ffffff' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"),linear-gradient(135deg,#8E97E8,#7C5CFC);
+  background-repeat:no-repeat;background-position:right 14px center,center;
+  transition:transform .18s cubic-bezier(.34,1.56,.64,1),box-shadow .2s;
+}
+.period-select:active{transform:scale(.95)}
+.period-select option{color:#1a1a2e;background:#fff;font-weight:700}
+
+/* ── Game cards carousel (Independent rows container) ── */
+.results-section{width:100%;display:none;animation:fadeUp .3s ease both}
+.results-section.show{display:block}
+
+/* Wrapper to hold independent sliding rows */
+.results-scroll-wrapper {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 19px; 
+}
+.results-scroll-wrapper.is-msg {
+  display: block;
+}
+
+.results-scroll{
+  width:100%;
+  display:flex;
+  flex-direction:row;
+  gap: 15px; 
+  overflow-x:auto;overflow-y:hidden;
+  padding:6px 2px 14px;
+  scroll-behavior:smooth;
+  -webkit-overflow-scrolling:touch;
+  scrollbar-width:none;
+  scroll-snap-type: x mandatory; /* Magnatic snap scroll features activate kiya */
+}
+.results-scroll::-webkit-scrollbar{display:none}
+
+/* ── Result card entries fade-in transition ── */
+@keyframes cardFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.result-card{
+  width:110px; 
+  flex-shrink:0;
+  display:flex;flex-direction:column;align-items:center;gap:9px;
+  cursor:pointer;
+  scroll-snap-align: start; /* Har card slide hone par start point par snap hoga */
+  transition:transform .22s cubic-bezier(.34,1.56,.64,1);
+  -webkit-tap-highlight-color:transparent;
+  animation: cardFadeIn 0.42s cubic-bezier(0.16, 1, 0.3, 1) both; /* Fade-in load-in smooth animation */
+}
+.result-card:active{transform:scale(.95)}
+.phone-frame{
+  width:110px; 
+  aspect-ratio:9/18.5;
+  background:none;border-radius:20px;padding:0;box-shadow:none;position:relative;
+}
+.phone-screen{width:100%;height:100%;border-radius:16px;overflow:hidden;background:none}
+.phone-screen img{width:100%;height:100%;object-fit:cover;display:block}
+.result-name{
+  font-size:13px;font-weight:900;color:#4b5563; 
+  text-transform:uppercase;text-align:center;letter-spacing:.3px;
+  line-height:1.2;max-width:110px; 
+}
+
+.results-empty{width:100%;text-align:center;padding:40px 20px;font-size:13px;font-weight:700;color:#9ca3af}
+.results-loading{width:100%;display:flex;justify-content:center;padding:40px 0}
+.results-loading .spinner{width:34px;height:34px}
+
+/* ── Navbar — single floating pill (always visible) ── */
+.navbar{
+  background:rgba(255,255,255,0.92);
+  backdrop-filter:blur(20px);
+  -webkit-backdrop-filter:blur(20px);
+  width:calc(100% - 28px);
+  max-width:432px;
+  border-radius:28px;
+  padding:10px 6px;
+  display:flex;justify-content:space-around;align-items:center;
+  box-shadow:0 8px 28px rgba(100,80,220,.15);
+  border:1.5px solid rgba(255,255,255,0.95);
+  position:fixed;bottom:14px;
+  left:50%;transform:translateX(-50%);
+  animation:navSlideUp .4s .1s cubic-bezier(.22,1,.36,1) both;
+  z-index:900;
+}
+@keyframes navSlideUp{from{opacity:0;transform:translateX(-50%) translateY(24px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+.nav-item{
+  display:flex;align-items:center;padding:8px 14px;
+  border-radius:20px;text-decoration:none;color:#888;
+  transition:all .25s cubic-bezier(.34,1.56,.64,1);
+  -webkit-tap-highlight-color:transparent;
+}
+.nav-item i{font-size:18px}
+.nav-item span{margin-left:0;max-width:0;overflow:hidden;transition:.25s;white-space:nowrap;font-weight:800;font-size:13px}
+.nav-item.active{background-color:#7680F5;color:#fff}
+.nav-item.active span{margin-left:7px;max-width:100px}
+
+/* ── Status overlays ── */
+.full-ov{display:none;position:fixed;inset:0;z-index:3000;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:30px;background:linear-gradient(180deg,#c3caff,#e2e5ff 40%,#fff)}
+.full-ov.show{display:flex}
+.ov-icon{font-size:54px;margin-bottom:14px}
+.ov-title{font-size:22px;font-weight:900;color:#1E293B;margin-bottom:10px}
+.ov-desc{font-size:14px;color:#6b7280;max-width:320px;line-height:1.6;margin-bottom:20px}
+.ov-link{display:inline-block;background:linear-gradient(135deg,#7C3AED,#5B6AF0);color:#fff;text-decoration:none;padding:12px 24px;border-radius:12px;font-weight:800;font-size:14px}
+
+#loadingOverlay{position:fixed;inset:0;background:linear-gradient(180deg,#c3caff,#e2e5ff 40%,#fff);display:flex;align-items:center;justify-content:center;z-index:999;transition:opacity .3s}
+.spinner{width:44px;height:44px;border:4px solid rgba(124,92,252,.2);border-top-color:#7C5CFC;border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+
+<div id="loadingOverlay"><div class="spinner"></div></div>
+
+<!-- Status overlays -->
+<div class="full-ov" id="ovBanned">
+  <div class="ov-icon">&#128683;</div>
+  <div class="ov-title">Account Banned</div>
+  <div class="ov-desc">Aapka account permanently ban kar diya gaya hai.</div>
+  <a href="https://t.me/xx_drago" target="_blank" class="ov-link">Contact Support</a>
+</div>
+<div class="full-ov" id="ovBlocked">
+  <div class="ov-icon">&#9940;</div>
+  <div class="ov-title">Account Blocked</div>
+  <div class="ov-desc">Aapka account block kar diya gaya hai. Support se contact karo.</div>
+  <a href="https://t.me/xx_drago" target="_blank" class="ov-link">Contact Support</a>
+</div>
+<div class="full-ov" id="ovPaused">
+  <div class="ov-icon">&#9208;</div>
+  <div class="ov-title">Account Paused</div>
+  <div class="ov-desc">Aapka account temporarily pause hai.</div>
+  <a href="https://t.me/xx_drago" target="_blank" class="ov-link">Contact Support</a>
+</div>
+<div class="full-ov" id="ovExpired">
+  <div class="ov-icon">&#9203;</div>
+  <div class="ov-title">Subscription Expired</div>
+  <div class="ov-desc">Aapka plan expire ho gaya hai. Naya plan lo.</div>
+  <a href="/payment" class="ov-link">Select Plan</a>
+</div>
+
+<!-- ── Main content ── -->
+<div class="page-wrap">
+
+  <!-- Profile banner -->
+  <div id="profileBanner">
+    <div id="avatarWrap"></div>
+    <div class="profile-info">
+      <span class="welcome-text">Welcome back,</span>
+      <span class="user-name" id="bannerName">User</span>
+    </div>
+  </div>
+
+  <!-- Hero banner -->
+  <div class="hero">
+    <img src="/images/logo.jpg" alt="Drago Predictor" class="hero-img">
+    <div class="hero-text">
+      <h2>Game Predictor</h2>
+      <p>Select your game & period to continue.</p>
+    </div>
+  </div>
+
+  <!-- Game type selector -->
+  <div class="section-label">Select Game Type</div>
+  <div class="game-selector">
+    <div class="game-card" id="cardTrx" onclick="selectGame('trx')">
+      <img src="/images/game-trx.png" alt="TRX Wingo">
+      <div>
+        <div class="game-card-name">TRX WINGO</div>
+        <div class="game-card-sub">TRX Prediction</div>
+      </div>
+    </div>
+    <div class="game-card" id="cardWingo" onclick="selectGame('wingo')">
+      <img src="/images/game-wingo.png" alt="Wingo">
+      <div>
+        <div class="game-card-name">WINGO</div>
+        <div class="game-card-sub">Color Prediction</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Period selector -->
+  <div class="period-section" id="periodSection">
+    <div class="period-box">
+      <img src="/images/clock.webp" alt="Clock" class="period-clock">
+      <span class="period-heading">Period</span>
+      <div class="period-select-wrap">
+        <select class="period-select" id="periodSelect" onchange="selectPeriod(this.value)">
+          <option value="" disabled selected>Select</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- Results carousel rows wrapper -->
+  <div class="results-section" id="resultsSection">
+    <div class="section-label" style="margin-bottom:12px">Select Platform</div>
+    <div class="results-scroll-wrapper" id="resultsScroll"></div>
+  </div>
+
+</div><!-- /page-wrap -->
+
+<!-- Navbar — floating pill -->
+<nav class="navbar" id="navbar">
+  <a href="/home"    class="nav-item"><i class="fa-solid fa-house"></i><span>Home</span></a>
+  <a href="/game"    class="nav-item active"><i class="fa-solid fa-gamepad"></i><span>Game</span></a>
+  <a href="/payment" class="nav-item"><i class="fa-solid fa-calendar-check"></i><span>Plan</span></a>
+  <a href="/profile" class="nav-item"><i class="fa-regular fa-user"></i><span>Profile</span></a>
+</nav>
+
+<script>
+const API = "https://flask-hello-world-nu-sooty-63.vercel.app";
+let pollTmr = null;
+let selectedGame = null;
+
+function ud(){ try{ return JSON.parse(localStorage.getItem("_ud")||"null"); }catch(e){ return null; } }
+function auth(){
+  const u = ud();
+  if(!u||!u.uid||!u.session_signature) return null;
+  return { uid: u.uid, session_signature: u.session_signature };
+}
+function goLogin(){ localStorage.removeItem("_ud"); localStorage.removeItem("_qas"); window.location.replace("/"); }
+
+async function api(path, body){
+  const r = await fetch(API+path,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
+  const d = await r.json().catch(()=>({}));
+  if(!r.ok){ const e=new Error(d.detail||"Error "+r.status); e.status=r.status; e.detail=d.detail||""; throw e; }
+  return d;
+}
+async function withRefresh(cb){
+  try{ return await cb(); }
+  catch(e){
+    if(e.status===403 && e.detail==="session_expired"){
+      const a = auth(); if(!a){ goLogin(); return; }
+      try{
+        const d = await api("/api/refresh-session", a);
+        if(d.session_signature){ const u=ud(); u.session_signature=d.session_signature; localStorage.setItem("_ud",JSON.stringify(u)); }
+        return await cb();
+      }catch(e2){ if(e2.status===403){ goLogin(); return; } throw e2; }
+    }
+    throw e;
+  }
+}
+
+function hideOvs(){ ["ovBanned","ovBlocked","ovPaused","ovExpired"].forEach(id=>document.getElementById(id).classList.remove("show")); }
+function handleStatus(as, ss){
+  if(as==="banned") { stopPoll(); hideOvs(); document.getElementById("ovBanned").classList.add("show");  return false; }
+  if(as==="blocked"){ stopPoll(); hideOvs(); document.getElementById("ovBlocked").classList.add("show"); return false; }
+  if(as==="paused") { stopPoll(); hideOvs(); document.getElementById("ovPaused").classList.add("show");  return false; }
+  if(ss!=="active" && ss!=="free") { stopPoll(); hideOvs(); document.getElementById("ovExpired").classList.add("show"); return false; }
+  hideOvs(); return true;
+}
+
+function startPoll(){ if(pollTmr) return; pollTmr = setInterval(doPoll, 15000); }
+function stopPoll(){ if(pollTmr){ clearInterval(pollTmr); pollTmr=null; } }
+async function doPoll(){
+  const a = auth(); if(!a) return;
+  try{
+    const d = await withRefresh(()=>api("/api/account-status", a));
+    handleStatus(d.account_status, d.subscription_status);
+  }catch(e){}
+}
+
+function loadProfile(){
+  const u = ud(); if(!u) return;
+  document.getElementById("bannerName").textContent = u.name||"User";
+  const aw = document.getElementById("avatarWrap");
+  if(u.picture){
+    const img = document.createElement("img"); img.src=u.picture; img.alt=u.name||"User";
+    img.onerror=()=>{ img.remove(); mkAvatar(aw,u.name); };
+    aw.appendChild(img);
+  } else { mkAvatar(aw,u.name); }
+}
+function mkAvatar(el,name){
+  const d=document.createElement("div"); d.className="avatar-fallback";
+  d.textContent=(name||"U").charAt(0).toUpperCase(); el.appendChild(d);
+}
+
+const PERIODS = {
+  trx:   ["1 Min"],
+  wingo: ["30 Sec", "1 Min"],
+};
+let selectedPeriod = null;
+function periodCode(label){
+  if(label==="30 Sec") return "30s";
+  if(label==="1 Min")  return "1min";
+  return "";
+}
+
+const gamesCache = {};
+let loadReq = 0;
+
+function maybeShowResults(){
+  const sec = document.getElementById("resultsSection");
+  if(selectedGame && selectedPeriod){ sec.classList.add("show"); loadGames(); }
+  else { sec.classList.remove("show"); }
+}
+
+async function loadGames(){
+  const scroll = document.getElementById("resultsScroll");
+  const code = periodCode(selectedPeriod);
+  const reqId = ++loadReq;
+  scroll.classList.add("is-msg");
+  scroll.innerHTML = '<div class="results-loading"><div class="spinner"></div></div>';
+  try{
+    let list;
+    if(gamesCache[code]){
+      list = gamesCache[code];
+    } else {
+      const r = await fetch("/api/games?period="+encodeURIComponent(code));
+      const d = await r.json().catch(()=>({}));
+      list = Array.isArray(d.games) ? d.games : [];
+      gamesCache[code] = list;
+    }
+    if(reqId !== loadReq) return;
+    renderGames(list);
+  }catch(e){
+    if(reqId !== loadReq) return;
+    renderGames([]);
+  }
+}
+
+function renderGames(list){
+  const wrapper = document.getElementById("resultsScroll");
+  wrapper.innerHTML = "";
+  
+  if(!list.length){
+    wrapper.classList.add("is-msg");
+    wrapper.innerHTML = '<div class="results-empty">No platforms available yet.</div>';
+    return;
+  }
+  
+  wrapper.classList.remove("is-msg");
+  
+  const row1 = document.createElement("div");
+  row1.className = "results-scroll";
+  const row2 = document.createElement("div");
+  row2.className = "results-scroll";
+  
+  list.forEach((g, index)=>{
+    const card = document.createElement("div");
+    card.className = "result-card";
+    
+    // Cards load hone par unme staggered sequential delay add kiya
+    card.style.animationDelay = `${index * 40}ms`;
+    
+    card.onclick = ()=>{
+      const dest = g.link || (g.slug ? "/game/"+g.slug : null);
+      if(!dest) return;
+      const tf = periodCode(selectedPeriod) === "30s" ? "30s" : "1m";
+      const params = new URLSearchParams({
+        name: g.name||"",
+        link: dest,
+        game: selectedGame||"",
+        tf: tf,
+      });
+      window.location.href = "/game-link?" + params.toString();
+    };
+    const img = document.createElement("img");
+    img.src = g.image; img.alt = g.name; img.loading = "lazy";
+    const screen = document.createElement("div"); screen.className = "phone-screen"; screen.appendChild(img);
+    const frame  = document.createElement("div"); frame.className  = "phone-frame";  frame.appendChild(screen);
+    const name   = document.createElement("div"); name.className   = "result-name";  name.textContent = g.name;
+    card.appendChild(frame); card.appendChild(name);
+    
+    if(index % 2 === 0) {
+      row1.appendChild(card);
+    } else {
+      row2.appendChild(card);
+    }
+  });
+  
+  wrapper.appendChild(row1);
+  if(row2.children.length > 0) {
+    wrapper.appendChild(row2);
+  }
+}
+
+window.selectGame = function(type){
+  selectedGame = type;
+  selectedPeriod = null;
+  document.getElementById("cardTrx").classList.toggle("selected",   type==="trx");
+  document.getElementById("cardWingo").classList.toggle("selected", type==="wingo");
+
+  const options = PERIODS[type]||[];
+  const sel = document.getElementById("periodSelect");
+  sel.innerHTML = "";
+  options.forEach((p,i)=>{
+    const opt = document.createElement("option"); opt.value=p; opt.textContent=p; sel.appendChild(opt);
+    if(i===0){ sel.value=p; selectedPeriod=p; }
+  });
+
+  const sec = document.getElementById("periodSection");
+  sec.classList.add("show");
+  setTimeout(()=>sec.scrollIntoView({behavior:"smooth",block:"nearest"}), 80);
+  maybeShowResults();
+};
+
+window.selectPeriod = function(period){
+  selectedPeriod = period;
+  maybeShowResults();
+};
+
+async function init(){
+  const a = auth(); if(!a){ goLogin(); return; }
+  loadProfile();
+  const loaderTimeout = setTimeout(()=>{ hideLoader(); startPoll(); }, 4000);
+  try{
+    const d = await withRefresh(()=>api("/api/account-status", a));
+    clearTimeout(loaderTimeout);
+    if(!handleStatus(d.account_status||"active", d.subscription_status||"none")){ hideLoader(); return; }
+    startPoll();
+  }catch(e){ clearTimeout(loaderTimeout); startPoll(); }
+  hideLoader();
+}
+function hideLoader(){ const l=document.getElementById("loadingOverlay"); if(!l) return; l.style.opacity="0"; setTimeout(()=>{ if(l) l.style.display="none"; },300); }
+
+init();
+</script>
+</body>
+</html>

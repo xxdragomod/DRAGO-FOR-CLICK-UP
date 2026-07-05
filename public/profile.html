@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Profile — Drago Predictor</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+@view-transition{navigation:auto}
+::view-transition-old(root){animation:vtOut .22s cubic-bezier(.4,0,.2,1) both}
+::view-transition-new(root){animation:vtIn .26s cubic-bezier(.22,1,.36,1) both}
+@keyframes vtOut{to{opacity:0;transform:translateY(-8px)}}
+@keyframes vtIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+body{
+  min-height:100vh;
+  background:linear-gradient(180deg,#c3caff 0%,#e2e5ff 40%,#ffffff 100%);
+  font-family:'Montserrat',sans-serif;
+  display:flex;flex-direction:column;align-items:center;
+  padding:20px 14px 100px;
+}
+
+/* Header card */
+.profile-head{width:100%;max-width:440px;background:#fff;border-radius:22px;padding:20px 18px;box-shadow:0 8px 22px rgba(124,92,252,.12);text-align:center;margin-bottom:12px}
+.avatar-lg{width:72px;height:72px;border-radius:50%;object-fit:cover;margin:0 auto 10px;display:block;border:3px solid #eef0ff}
+.avatar-lg-fallback{width:72px;height:72px;border-radius:50%;margin:0 auto 10px;background:linear-gradient(135deg,#7C3AED,#5B6AF0);display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:900;color:#fff}
+.profile-head h2{font-size:17px;font-weight:900;color:#1a1a2e;margin-bottom:3px}
+.profile-head .email{font-size:12px;color:#6b7280;font-weight:600;word-break:break-all}
+.badge{display:inline-flex;align-items:center;gap:5px;margin-top:10px;font-size:11px;font-weight:800;padding:5px 13px;border-radius:30px;text-transform:uppercase;letter-spacing:.4px}
+.badge-active{background:linear-gradient(135deg,#10B981,#059669);color:#fff}
+.badge-none{background:#f1f1f5;color:#6b7280}
+
+/* Detail list */
+.details{width:100%;max-width:440px;background:#fff;border-radius:20px;padding:4px 6px;box-shadow:0 6px 18px rgba(0,0,0,.05);margin-bottom:12px}
+.row{display:flex;align-items:center;gap:12px;padding:12px 10px;border-bottom:1px solid #f1f2fa}
+.row:last-child{border-bottom:none}
+.row .ic{width:36px;height:36px;border-radius:10px;background:#eef0ff;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.row .ic i{font-size:15px;color:#7C5CFC}
+.row .meta{display:flex;flex-direction:column;min-width:0}
+.row .meta .lbl{font-size:10px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.4px}
+.row .meta .val{font-size:13px;font-weight:800;color:#1a1a2e;word-break:break-word;margin-top:1px}
+.row .meta .val.muted{color:#9ca3af;font-weight:700}
+.verified-tag{font-size:9px;font-weight:800;color:#059669;background:#d1fae5;padding:2px 7px;border-radius:20px;margin-left:6px;white-space:nowrap}
+
+/* Logout */
+.logout-btn{width:100%;max-width:440px;background:linear-gradient(135deg,#EF4444,#DC2626);color:#fff;border:none;padding:13px;border-radius:13px;font-size:13px;font-weight:800;cursor:pointer;box-shadow:0 5px 15px rgba(239,68,68,.25);display:flex;align-items:center;justify-content:center;gap:8px;transition:transform .2s cubic-bezier(.34,1.56,.64,1)}
+.logout-btn:active{transform:scale(.96)}
+
+/* Legal section */
+.legal-card{width:100%;max-width:440px;background:#fff;border-radius:18px;padding:14px 16px;box-shadow:0 4px 14px rgba(0,0,0,.04);margin-top:10px;margin-bottom:0}
+.legal-card h3{font-size:11px;font-weight:900;color:#6b7280;text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px}
+.legal-section{margin-bottom:12px}
+.legal-section:last-child{margin-bottom:0}
+.legal-title{font-size:12px;font-weight:800;color:#1a1a2e;margin-bottom:4px;display:flex;align-items:center;gap:6px}
+.legal-title i{font-size:11px;color:#8B5CF6}
+.legal-text{font-size:11px;color:#6b7280;line-height:1.6;font-weight:600}
+.legal-link{font-size:10.5px;font-weight:700;color:#8B5CF6;text-decoration:none;display:inline-flex;align-items:center;gap:3px;margin-top:5px}
+
+/* Page animation */
+body > *:not(#loadingOverlay):not(.full-ov){animation:fadeUp .4s ease both}
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+.profile-head{animation-delay:.05s}
+.details{animation-delay:.12s}
+.logout-btn{animation-delay:.18s}
+.legal-card{animation-delay:.22s}
+
+/* Navbar (glassmorphism) */
+.navbar{
+  background:rgba(255,255,255,0.75);
+  backdrop-filter:blur(14px);
+  -webkit-backdrop-filter:blur(14px);
+  width:100%;padding:12px 0;
+  display:flex;justify-content:space-around;align-items:center;
+  border-top:1px solid rgba(0,0,0,0.05);
+  position:fixed;bottom:0;left:0;
+  transition:transform 0.4s ease;z-index:900;
+}
+.nav-item{display:flex;align-items:center;padding:7px 14px;border-radius:20px;text-decoration:none;color:#888;transition:all 0.25s ease}
+.nav-item i{font-size:18px}
+.nav-item span{margin-left:0;max-width:0;overflow:hidden;transition:0.25s;white-space:nowrap;font-weight:800;font-size:13px}
+.nav-item.active{background-color:#7680F5;color:#fff}
+.nav-item.active span{margin-left:7px;max-width:100px}
+
+#expandBtn{
+  position:fixed;bottom:16px;left:50%;transform:translateX(-50%);
+  background:linear-gradient(135deg,#7C5CFC,#5B6AF0);
+  color:#fff;padding:10px 18px;border-radius:50px;cursor:pointer;
+  display:none;box-shadow:0 4px 14px rgba(0,0,0,0.18);z-index:1000;
+  font-weight:800;font-size:13px;letter-spacing:.4px;
+}
+
+/* Status overlay */
+.full-ov{display:none;position:fixed;inset:0;z-index:3000;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:30px;background:linear-gradient(180deg,#c3caff,#e2e5ff 40%,#fff)}
+.full-ov.show{display:flex}
+.ov-icon{font-size:54px;margin-bottom:14px}
+.ov-title{font-size:22px;font-weight:900;color:#1E293B;margin-bottom:10px}
+.ov-desc{font-size:14px;color:#6b7280;max-width:320px;line-height:1.6;margin-bottom:20px}
+.ov-link{display:inline-block;background:linear-gradient(135deg,#7C3AED,#5B6AF0);color:#fff;text-decoration:none;padding:12px 24px;border-radius:12px;font-weight:800;font-size:14px}
+
+#loadingOverlay{position:fixed;inset:0;background:linear-gradient(180deg,#c3caff,#e2e5ff 40%,#fff);display:flex;align-items:center;justify-content:center;z-index:999;transition:opacity .3s}
+.spinner{width:44px;height:44px;border:4px solid rgba(124,92,252,.2);border-top-color:#7C5CFC;border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+
+<div id="loadingOverlay"><div class="spinner"></div></div>
+
+<!-- Status overlays -->
+<div class="full-ov" id="ovBanned">
+  <div class="ov-icon">🚫</div>
+  <div class="ov-title">Account Banned</div>
+  <div class="ov-desc">Aapka account permanently ban kar diya gaya hai. Kisi bhi content tak access nahi hai.</div>
+  <a href="https://t.me/xx_drago" target="_blank" class="ov-link">Contact Support</a>
+</div>
+<div class="full-ov" id="ovBlocked">
+  <div class="ov-icon">⛔</div>
+  <div class="ov-title">Account Blocked</div>
+  <div class="ov-desc">Aapka account block kar diya gaya hai. Support se contact karo.</div>
+  <a href="https://t.me/xx_drago" target="_blank" class="ov-link">Contact Support</a>
+</div>
+<div class="full-ov" id="ovPaused">
+  <div class="ov-icon">⏸️</div>
+  <div class="ov-title">Account Paused</div>
+  <div class="ov-desc">Aapka account temporarily pause hai. Thodi der baad try karo.</div>
+  <a href="https://t.me/xx_drago" target="_blank" class="ov-link">Contact Support</a>
+</div>
+
+<!-- Profile header -->
+<div class="profile-head">
+  <div id="avatarWrap"></div>
+  <h2 id="pName">User</h2>
+  <div class="email" id="pEmail">—</div>
+  <span class="badge badge-none" id="planBadge"><i class="fa-solid fa-circle-info"></i> No Plan</span>
+</div>
+
+<!-- Details -->
+<div class="details">
+  <div class="row">
+    <div class="ic"><i class="fa-solid fa-envelope"></i></div>
+    <div class="meta"><span class="lbl">Gmail</span><span class="val" id="dEmail">—</span></div>
+  </div>
+  <div class="row">
+    <div class="ic"><i class="fa-solid fa-user"></i></div>
+    <div class="meta"><span class="lbl">Name</span><span class="val" id="dName">—</span></div>
+  </div>
+  <div class="row">
+    <div class="ic"><i class="fa-brands fa-telegram"></i></div>
+    <div class="meta"><span class="lbl">Telegram Username</span><span class="val" id="dTgUser">—</span></div>
+  </div>
+  <div class="row">
+    <div class="ic"><i class="fa-solid fa-id-badge"></i></div>
+    <div class="meta"><span class="lbl">Telegram ID</span><span class="val" id="dTgId">—</span></div>
+  </div>
+  <div class="row">
+    <div class="ic"><i class="fa-solid fa-calendar-check"></i></div>
+    <div class="meta"><span class="lbl">Current Plan</span><span class="val" id="dPlan">—</span></div>
+  </div>
+  <div class="row" id="rowDuration" style="display:none">
+    <div class="ic"><i class="fa-solid fa-hourglass-half"></i></div>
+    <div class="meta"><span class="lbl">Plan Duration</span><span class="val" id="dDuration">—</span></div>
+  </div>
+  <div class="row" id="rowDaysLeft" style="display:none">
+    <div class="ic"><i class="fa-solid fa-clock"></i></div>
+    <div class="meta"><span class="lbl">Days Left</span><span class="val" id="dDaysLeft">—</span></div>
+  </div>
+  <div class="row" id="rowExpiry" style="display:none">
+    <div class="ic"><i class="fa-solid fa-calendar-xmark"></i></div>
+    <div class="meta"><span class="lbl">Expires On</span><span class="val" id="dExpiry">—</span></div>
+  </div>
+</div>
+
+<button class="logout-btn" id="logoutBtn"><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
+
+<!-- Privacy Policy & Disclaimer -->
+<div class="legal-card">
+  <h3><i class="fa-solid fa-scale-balanced" style="margin-right:5px;color:#8B5CF6"></i>Legal</h3>
+  <div class="legal-section">
+    <div class="legal-title"><i class="fa-solid fa-shield-halved"></i> Privacy Policy</div>
+    <div class="legal-text">
+      Drago Predictor aapka naam, email aur Telegram ID sirf account verification aur plan management ke liye collect karta hai.
+      Aapka koi bhi data third parties ke saath share nahi kiya jaata. Data Firebase par securely store hota hai.
+      App use karna band karke aap kabhi bhi apna account delete kar sakte ho — support se contact karo.
+    </div>
+  </div>
+  <div class="legal-section">
+    <div class="legal-title"><i class="fa-solid fa-circle-exclamation"></i> Disclaimer</div>
+    <div class="legal-text">
+      Drago Predictor ek prediction tool hai aur yeh kisi bhi financial gain ya loss ki guarantee nahi deta.
+      App ke predictions sirf informational hain. Real money gaming mein involve hona aapki apni zimmedari hai.
+      18 saal se kam umra ke users ke liye strictly prohibited hai. Use karna apne risk par karo.
+    </div>
+  </div>
+  <div class="legal-section">
+    <div class="legal-title"><i class="fa-solid fa-envelope"></i> Contact</div>
+    <div class="legal-text">Kisi bhi query ke liye support se contact karo:</div>
+    <a class="legal-link" href="https://t.me/xx_drago" target="_blank"><i class="fa-brands fa-telegram"></i>@xx_drago on Telegram</a>
+  </div>
+</div>
+
+<!-- Expand Button -->
+<div id="expandBtn">SHOW</div>
+
+<!-- Navbar -->
+<nav class="navbar" id="navbar">
+  <a href="/home" class="nav-item"><i class="fa-solid fa-house"></i><span>Home</span></a>
+  <a href="#" class="nav-item" id="navGame"><i class="fa-solid fa-gamepad"></i><span>Game</span></a>
+  <a href="/payment" class="nav-item"><i class="fa-solid fa-calendar-check"></i><span>Plan</span></a>
+  <a href="/profile" class="nav-item active"><i class="fa-regular fa-user"></i><span>Profile</span></a>
+</nav>
+
+<script>
+const API = "https://flask-hello-world-nu-sooty-63.vercel.app";
+let pollTmr=null;
+
+function ud(){ try{return JSON.parse(localStorage.getItem("_ud")||"null");}catch(e){return null;} }
+function auth(){
+  const u=ud();
+  if(!u||!u.uid||!u.session_signature) return null;
+  return {uid:u.uid,session_signature:u.session_signature};
+}
+function goLogin(){ localStorage.removeItem("_ud"); localStorage.removeItem("_qas"); window.location.replace("/"); }
+
+async function api(path, body){
+  const r=await fetch(API+path,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
+  const d=await r.json().catch(()=>({}));
+  if(!r.ok){ const e=new Error(d.detail||"Error "+r.status); e.status=r.status; e.detail=d.detail||""; throw e; }
+  return d;
+}
+async function withRefresh(cb){
+  try{ return await cb(); }
+  catch(e){
+    if(e.status===403 && e.detail==="session_expired"){
+      const a=auth(); if(!a){ goLogin(); return; }
+      try{
+        const d=await api("/api/refresh-session",a);
+        if(d.session_signature){ const u=ud(); u.session_signature=d.session_signature; localStorage.setItem("_ud",JSON.stringify(u)); }
+        return await cb();
+      }catch(e2){ if(e2.status===403){ goLogin(); return; } throw e2; }
+    }
+    throw e;
+  }
+}
+
+function hideOvs(){ ["ovBanned","ovBlocked","ovPaused"].forEach(id=>document.getElementById(id).classList.remove("show")); }
+function handleStatus(as){
+  if(as==="banned") { stopPoll(); hideOvs(); document.getElementById("ovBanned").classList.add("show");  return false; }
+  if(as==="blocked"){ stopPoll(); hideOvs(); document.getElementById("ovBlocked").classList.add("show"); return false; }
+  if(as==="paused") { stopPoll(); hideOvs(); document.getElementById("ovPaused").classList.add("show");  return false; }
+  hideOvs(); return true;
+}
+
+function startPoll(){ if(pollTmr) return; pollTmr=setInterval(doPoll,20000); }
+function stopPoll(){ if(pollTmr){clearInterval(pollTmr);pollTmr=null;} }
+async function doPoll(){
+  const a=auth(); if(!a) return;
+  try{
+    const d=await withRefresh(()=>api("/api/account-status",a));
+    handleStatus(d.account_status);
+  }catch(e){}
+}
+
+function mkAvatar(el,name){
+  const d=document.createElement("div"); d.className="avatar-lg-fallback";
+  d.textContent=(name||"U").charAt(0).toUpperCase(); el.appendChild(d);
+}
+function setAvatar(pic,name){
+  const aw=document.getElementById("avatarWrap"); aw.innerHTML="";
+  if(pic){
+    const img=document.createElement("img"); img.src=pic; img.alt=name||"User"; img.className="avatar-lg";
+    img.onerror=()=>{ img.remove(); mkAvatar(aw,name); };
+    aw.appendChild(img);
+  } else { mkAvatar(aw,name); }
+}
+
+function txt(id,v,muted){
+  const el=document.getElementById(id);
+  if(v){ el.textContent=v; el.classList.remove("muted"); }
+  else { el.textContent="Not set"; if(muted) el.classList.add("muted"); }
+}
+
+function fillProfile(d){
+  const name=d.name||"User";
+  setAvatar(d.picture,name);
+  document.getElementById("pName").textContent=name;
+  document.getElementById("pEmail").textContent=d.email||"—";
+
+  txt("dEmail",d.email,true);
+  txt("dName",d.name,true);
+  txt("dTgUser",d.telegram_username?("@"+d.telegram_username):"",true);
+  txt("dTgId",d.telegram_id?String(d.telegram_id):"",true);
+
+  // Plan
+  const planName=(d.plan||"").toString().trim();
+  const dur=(d.plan_duration||"").toString().trim();
+  const planLabel=planName?(planName+(dur?(" "+dur):"")):"No active plan";
+  txt("dPlan",planName?planLabel:"",true);
+
+  const isActive = d.subscription_status==="active" && !!planName;
+  const expiry = parseInt(d.plan_expires_at||0,10);
+
+  // Active plan details (Duration, Days Left, Expires On)
+  const rowDur=document.getElementById("rowDuration");
+  const rowDl=document.getElementById("rowDaysLeft");
+  const rowExp=document.getElementById("rowExpiry");
+  if(isActive){
+    rowDur.style.display="flex";
+    rowDl.style.display="flex";
+    rowExp.style.display="flex";
+    document.getElementById("dDuration").textContent=dur||"—";
+    const dl = expiry ? Math.max(0, Math.ceil((expiry - Date.now())/86400000)) : 0;
+    document.getElementById("dDaysLeft").textContent=expiry?(dl+" days"):"—";
+    document.getElementById("dExpiry").textContent=fmtDate(expiry);
+  } else {
+    rowDur.style.display="none";
+    rowDl.style.display="none";
+    rowExp.style.display="none";
+  }
+
+  // Badge
+  const badge=document.getElementById("planBadge");
+  if(isActive){
+    badge.className="badge badge-active";
+    badge.innerHTML='<i class="fa-solid fa-circle-check"></i> '+(planLabel||"Active");
+  } else {
+    badge.className="badge badge-none";
+    badge.innerHTML='<i class="fa-solid fa-circle-info"></i> No Plan';
+  }
+}
+
+function fmtDate(ms){
+  if(!ms) return "—";
+  try{ return new Date(ms).toLocaleDateString("en-GB",{day:"2-digit",month:"short",year:"numeric"}); }
+  catch(e){ return "—"; }
+}
+
+async function init(){
+  const a=auth(); if(!a){ goLogin(); return; }
+  // Optimistic fill from local cache
+  const u=ud();
+  if(u){ setAvatar(u.picture,u.name); document.getElementById("pName").textContent=u.name||"User"; }
+  try{
+    const d=await withRefresh(()=>api("/api/profile",a));
+    if(!d){ hideLoader(); return; }
+    if(!handleStatus(d.account_status||"active")){ hideLoader(); return; }
+    fillProfile(d);
+    startPoll();
+  }catch(e){
+    // keep cached values; allow logout
+  }
+  hideLoader();
+}
+function hideLoader(){ const l=document.getElementById("loadingOverlay"); l.style.opacity="0"; setTimeout(()=>l.style.display="none",300); }
+
+document.getElementById("logoutBtn").addEventListener("click",()=>{
+  if(confirm("Logout from Drago Predictor?")){
+    localStorage.removeItem("_ud"); localStorage.removeItem("_qas");
+    window.location.replace("/");
+  }
+});
+document.getElementById("navGame").addEventListener("click",e=>{e.preventDefault();window.location.href="/game";});
+
+// ── Navbar auto-hide / expand ──
+(function(){
+  const navbar=document.getElementById('navbar');
+  const expandBtn=document.getElementById('expandBtn');
+  const items=document.querySelectorAll('.nav-item');
+  let timer;
+  function startTimer(){
+    clearTimeout(timer);
+    timer=setTimeout(()=>{
+      navbar.style.transform='translateY(100%)';
+      setTimeout(()=>{ navbar.style.display='none'; expandBtn.style.display='block'; },500);
+    },5000);
+  }
+  expandBtn.addEventListener('click',()=>{
+    navbar.style.display='flex';
+    setTimeout(()=>{ navbar.style.transform='translateY(0)'; },10);
+    expandBtn.style.display='none';
+    startTimer();
+  });
+  items.forEach(item=>{
+    item.addEventListener('click',function(){ startTimer(); });
+  });
+  window.addEventListener('mousemove',startTimer);
+  window.addEventListener('touchstart',startTimer);
+  startTimer();
+})();
+
+init();
+</script>
+</body>
+</html>

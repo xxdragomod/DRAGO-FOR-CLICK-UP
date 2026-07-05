@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self';
+                 script-src 'self' https://accounts.google.com https://cdnjs.cloudflare.com 'unsafe-inline';
+                 style-src 'self' https://fonts.googleapis.com https://cdnjs.cloudflare.com 'unsafe-inline';
+                 font-src https://fonts.gstatic.com https://cdnjs.cloudflare.com;
+                 connect-src 'self' https://flask-hello-world-nu-sooty-63.vercel.app https://accounts.google.com https://www.googleapis.com;
+                 img-src 'self' https: data:;">
+  <title>Quantum Analyzer</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Luckiest+Guy&display=swap" rel="stylesheet">
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <style>
+    *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+    @view-transition{navigation:auto}
+    ::view-transition-old(root){animation:vtOut .22s cubic-bezier(.4,0,.2,1) both}
+    ::view-transition-new(root){animation:vtIn .26s cubic-bezier(.22,1,.36,1) both}
+    @keyframes vtOut{to{opacity:0;transform:translateY(-8px)}}
+    @keyframes vtIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+    body {
+      min-height:100vh;
+      background:linear-gradient(180deg,#c3caff 0%,#e2e5ff 40%,#ffffff 100%);
+      font-family:'Space Grotesk',sans-serif;
+      overflow-y:auto; overflow-x:hidden;
+      display:flex; flex-direction:column; align-items:center; justify-content:flex-start;
+      padding:20px 10px;
+    }
+    .app-container {
+      width:100%; max-width:100vw; overflow:hidden;
+      display:flex; flex-direction:column; align-items:center; text-align:center;
+      margin-bottom:20px;
+    }
+    .preview-image {
+      width:100vw; max-width:100vw; height:auto; max-height:180vh;
+      object-fit:contain; border-radius:20px; margin-top:10px; display:block;
+      transform:scale(1.15); transform-origin:center top;
+    }
+    .promo-text {
+      margin-top:20px; color:#1E293B;
+      font-family:'Luckiest Guy',cursive;
+      font-size:38px; font-weight:400; letter-spacing:2px;
+      padding:0 20px; line-height:1.15; text-transform:uppercase;
+    }
+    .action-cards-container {
+      display:flex; gap:12px; justify-content:center; align-items:center;
+      width:100%; max-width:500px; margin:25px auto 10px; padding:0 15px;
+    }
+    .action-card {
+      flex:1; display:flex; align-items:center; gap:10px;
+      padding:12px 14px; border-radius:24px; text-decoration:none;
+      text-align:left; box-shadow:0 4px 15px rgba(0,0,0,.03);
+      transition:transform .15s; -webkit-tap-highlight-color:transparent;
+    }
+    .action-card:active { transform:scale(.96); }
+    .card-join    { background:linear-gradient(135deg,#e6e9ff,#f1f3ff); border:1.5px solid #cbd2f6; }
+    .card-support { background:linear-gradient(135deg,#f5f6f8,#fff); border:1.5px solid #e2e8f0; }
+    .card-icon    { color:#000; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+    .card-content { display:flex; flex-direction:column; }
+    .card-title   { font-family:'Space Grotesk',sans-serif; font-size:16px; font-weight:700; color:#000; line-height:1.2; }
+    .card-subtitle{ font-family:'Space Grotesk',sans-serif; font-size:11px; font-weight:500; color:#64748B; margin-top:1px; white-space:nowrap; }
+
+    #loginView {
+      display:flex; flex-direction:column; align-items:center;
+      width:100%; margin-top:25px; margin-bottom:40px; z-index:100;
+    }
+    .sub-btn {
+      position:relative; width:300px; height:50px; border-radius:50px;
+      background:linear-gradient(90deg,#7C5CFC,#c4b5fd);
+      border:none; cursor:pointer;
+      display:flex; align-items:center; justify-content:center; gap:10px;
+      outline:none; -webkit-tap-highlight-color:transparent;
+      box-shadow:0 8px 30px rgba(124,92,252,.45);
+      transition:transform .15s,box-shadow .15s;
+      animation:btnAppear .6s .3s both ease-out;
+    }
+    @keyframes btnAppear { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+    .sub-btn:active { transform:scale(.96); box-shadow:0 4px 16px rgba(124,92,252,.35); }
+    .sub-btn .btn-label {
+      color:#fff; font-family:'Space Grotesk',sans-serif;
+      font-size:18px; font-weight:700; letter-spacing:.3px; white-space:nowrap;
+    }
+    .error-msg { margin-top:14px; font-size:13px; color:#DC2626; text-align:center; font-weight:500; display:none; word-break:break-word; max-width:300px; }
+
+    /* Loading overlay */
+    #loadingOverlay {
+      position:fixed; inset:0;
+      background:linear-gradient(180deg,#c3caff,#e2e5ff 40%,#fff);
+      display:flex; align-items:center; justify-content:center;
+      z-index:999; transition:opacity .3s;
+    }
+    .spinner {
+      width:44px; height:44px;
+      border:4px solid rgba(124,92,252,.2);
+      border-top-color:#7C5CFC;
+      border-radius:50%;
+      animation:spin .8s linear infinite;
+    }
+    @keyframes spin { to{transform:rotate(360deg)} }
+
+    /* Status overlay (ban/block) */
+    #statusOverlay {
+      display:none; position:fixed; inset:0; z-index:5000;
+      background:linear-gradient(180deg,#c3caff,#e2e5ff 40%,#fff);
+      flex-direction:column; align-items:center; justify-content:center;
+      text-align:center; padding:30px; font-family:sans-serif;
+    }
+    #statusOverlay.show { display:flex; }
+    #statusOverlay .ov-icon  { font-size:52px; margin-bottom:14px; }
+    #statusOverlay .ov-title { font-size:22px; font-weight:900; color:#1E293B; margin-bottom:10px; }
+    #statusOverlay .ov-desc  { font-size:14px; color:#6b7280; max-width:300px; line-height:1.6; margin-bottom:20px; }
+    #statusOverlay .ov-link  {
+      background:linear-gradient(135deg,#7C3AED,#5B6AF0);
+      color:#fff; text-decoration:none;
+      padding:12px 24px; border-radius:12px; font-weight:800; font-size:14px;
+    }
+
+    @media(max-width:400px){
+      .card-title{font-size:14px}
+      .card-subtitle{font-size:10px}
+      .action-card{padding:10px 12px}
+    }
+  </style>
+</head>
+<body>
+
+<div id="loadingOverlay"><div class="spinner"></div></div>
+
+<!-- Ban/Block overlay for login page -->
+<div id="statusOverlay">
+  <div class="ov-icon" id="ovIcon">⛔</div>
+  <div class="ov-title" id="ovTitle">Account Blocked</div>
+  <div class="ov-desc"  id="ovDesc">Aapka account block kar diya gaya hai.</div>
+  <a href="https://t.me/xx_drago" target="_blank" class="ov-link">Contact Support</a>
+</div>
+
+<div class="app-container">
+  <img src="/images/preview.png" alt="UI Preview" class="preview-image"/>
+  <h2 class="promo-text">MAKE YOUR LIFE EASY WITH DRAGO PREDICTOR</h2>
+
+  <div class="action-cards-container">
+    <a href="https://t.me/+t_giD22Lulk0NmE1" target="_blank" class="action-card card-join">
+      <div class="card-icon">
+        <svg viewBox="0 0 24 24" width="34" height="34" fill="currentColor">
+          <path d="M21.5 2.5L2 11.5l7.5 3.5 3.5 7.5 8.5-20z M9.5 15l1.5 4 1-3.5L19 5.5 9.5 15z"/>
+        </svg>
+      </div>
+      <div class="card-content">
+        <span class="card-title">Join Channel</span>
+        <span class="card-subtitle">• Get latest updates!</span>
+      </div>
+    </a>
+    <a href="https://t.me/xx_drago" target="_blank" class="action-card card-support">
+      <div class="card-icon">
+        <svg viewBox="0 0 24 24" width="34" height="34" fill="currentColor">
+          <path d="M12 2A10 10 0 0 0 2 12v4a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2v-4a2 2 0 0 0-2-2H4a8 8 0 0 1 16 0h-2a2 2 0 0 0-2 2v4a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2v-4A10 10 0 0 0 12 2z"/>
+          <path d="M6 18c0 2.5 2 4 4.5 4h1v-1.5h-1C8.5 20.5 7.5 19.5 7.4 18Z"/>
+        </svg>
+      </div>
+      <div class="card-content">
+        <span class="card-title">Customer &amp;<br>Support</span>
+        <span class="card-subtitle">• We are here to help!</span>
+      </div>
+    </a>
+  </div>
+
+  <div id="loginView" style="display:none;">
+    <button id="googleLoginBtn" class="sub-btn" type="button">
+      <span class="btn-label">✦ Get Started ✦</span>
+    </button>
+    <div id="errorMsg" class="error-msg"></div>
+  </div>
+</div>
+
+<script>
+const API_BASE     = "https://flask-hello-world-nu-sooty-63.vercel.app";
+const GOOGLE_ID    = "1066810347341-9jc6gt17evnbv09di21eq95d42itv49a.apps.googleusercontent.com";
+const SESSION_KEY  = "_qas";
+const SESSION_TTL  = 30 * 24 * 60 * 60 * 1000;
+
+// ── XOR session encryption ──
+const _EK = (() => {
+  const p = [
+    navigator.userAgent.length.toString(16),
+    screen.width.toString(16), screen.height.toString(16),
+    (navigator.hardwareConcurrency||4).toString(16),
+    new Date().getTimezoneOffset().toString(16),
+  ];
+  return p.join("").repeat(8).slice(0,64);
+})();
+
+function xor(str, key) {
+  let o = "";
+  for (let i = 0; i < str.length; i++)
+    o += String.fromCharCode(str.charCodeAt(i) ^ key.charCodeAt(i % key.length));
+  return o;
+}
+function enc(obj)  { try { return btoa(unescape(encodeURIComponent(xor(JSON.stringify(obj), _EK)))); } catch(e){ return null; } }
+function dec(b64)  { try { return JSON.parse(xor(decodeURIComponent(escape(atob(b64))), _EK)); } catch(e){ return null; } }
+
+// ── Device fingerprint ──
+function dfp() {
+  const c = document.createElement("canvas");
+  const x = c.getContext("2d");
+  x.textBaseline="top"; x.font="14px Arial";
+  x.fillStyle="#f60"; x.fillRect(125,1,62,20);
+  x.fillStyle="#069"; x.fillText("QA",2,15);
+  const cv = c.toDataURL().slice(-50);
+  const raw = [navigator.userAgent,navigator.language,screen.width+"x"+screen.height,
+               screen.colorDepth,new Date().getTimezoneOffset(),
+               navigator.hardwareConcurrency||"",navigator.platform||"",cv].join("|");
+  let h = 0x811c9dc5;
+  for (let i=0;i<raw.length;i++){h^=raw.charCodeAt(i);h=Math.imul(h,0x01000193);h>>>=0;}
+  return "dfp_"+h.toString(16);
+}
+
+// ── Session helpers ──
+function saveSession(user, devId) {
+  const e = enc({ e:user.email, u:user.uid, d:devId, t:Date.now() });
+  if (e) localStorage.setItem(SESSION_KEY, e);
+}
+function loadSession() {
+  try {
+    const raw = localStorage.getItem(SESSION_KEY);
+    if (!raw) return null;
+    const s = dec(raw);
+    if (!s || !s.e || !s.d || !s.t) return null;
+    if (Date.now() - s.t > SESSION_TTL) { localStorage.removeItem(SESSION_KEY); return null; }
+    return s;
+  } catch(e){ return null; }
+}
+function clearSession() { localStorage.removeItem(SESSION_KEY); localStorage.removeItem("_ud"); }
+
+// ── UI ──
+const loginView  = document.getElementById("loginView");
+const loginBtn   = document.getElementById("googleLoginBtn");
+const errorEl    = document.getElementById("errorMsg");
+const loadingOv  = document.getElementById("loadingOverlay");
+
+function hideLoader() { loadingOv.style.opacity="0"; setTimeout(()=>loadingOv.style.display="none",300); }
+function showLogin()  { loginView.style.display="flex"; hideLoader(); }
+function showErr(m)   { errorEl.style.display="block"; errorEl.textContent=m; }
+function hideErr()    { errorEl.style.display="none";  errorEl.textContent=""; }
+function setBusy(b)   {
+  loginBtn.disabled=b;
+  loginBtn.querySelector(".btn-label").textContent = b ? "Verifying..." : "✦ Get Started ✦";
+}
+
+// ── Status overlay ──
+function showStatusOverlay(status) {
+  const cfg = {
+    banned:  {icon:"🚫", title:"Account Banned",   desc:"Aapka account permanently ban kar diya gaya hai. Kisi bhi content tak access nahi hai."},
+    blocked: {icon:"⛔", title:"Account Blocked",  desc:"Aapka account block kar diya gaya hai. Support se contact karo."},
+    paused:  {icon:"⏸️", title:"Account Paused",   desc:"Aapka account temporarily pause hai. Thodi der baad try karo."},
+  }[status];
+  if (!cfg) return;
+  document.getElementById("ovIcon").textContent  = cfg.icon;
+  document.getElementById("ovTitle").textContent = cfg.title;
+  document.getElementById("ovDesc").textContent  = cfg.desc;
+  document.getElementById("statusOverlay").classList.add("show");
+}
+
+// ── Auto-login check ──
+function checkAutoLogin() {
+  const s = loadSession();
+  if (!s) return false;
+  if (s.d !== dfp()) { clearSession(); return false; }
+  // Check if user has active/free subscription stored locally
+  const u = (() => { try{ return JSON.parse(localStorage.getItem("_ud")||"null"); }catch(e){ return null; } })();
+  // Session hai par valid user data nahi (_ud missing/incomplete) — stale state.
+  // Clear karke login dikhao, warna / <-> /payment infinite redirect loop banta hai.
+  if (!u || !u.uid || !u.session_signature) { clearSession(); return false; }
+  const ss = u.subscription_status;
+  if (ss === "active" || ss === "free") {
+    window.location.replace("/home");
+  } else {
+    // Telegram verification removed — non-subscribed users go straight to payment.
+    window.location.replace("/payment");
+  }
+  return true;
+}
+
+// ── Google OAuth ──
+let tokenClient = null, googleReady = false, pendingLogin = false;
+
+function initGoogle() {
+  try {
+    tokenClient = google.accounts.oauth2.initTokenClient({
+      client_id:      GOOGLE_ID,
+      scope:          "https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email",
+      prompt:         "select_account",
+      callback:       async (res) => {
+        if (res && res.access_token) {
+          try { sessionStorage.setItem("_gat", res.access_token); } catch(e){}
+          await handleLogin(res.access_token);
+        } else {
+          setBusy(false);
+          showErr("Login cancelled. Dobara try karo.");
+        }
+      },
+      error_callback: (err) => {
+        setBusy(false);
+        showErr("Google error: " + (err.type||"unknown") + ". Dobara try karo.");
+      },
+    });
+    googleReady = true;
+    if (pendingLogin) { pendingLogin=false; tokenClient.requestAccessToken(); }
+  } catch(e) {
+    showErr("Google load nahi hua. Page refresh karo.");
+    setBusy(false);
+  }
+}
+
+window.onGoogleLibraryLoad = function() {
+  if (checkAutoLogin()) return;
+  initGoogle();
+  showLogin();
+};
+
+// Fallback poll for Google library
+let _pc = 0;
+const _poll = setInterval(()=>{
+  _pc++;
+  if (googleReady) { clearInterval(_poll); return; }
+  if (typeof google!=="undefined" && google.accounts && google.accounts.oauth2) {
+    clearInterval(_poll);
+    if (checkAutoLogin()) return;
+    initGoogle(); showLogin();
+  }
+  if (_pc > 40) {
+    clearInterval(_poll); showLogin();
+    showErr("Google load nahi hua. Internet check karo ya page refresh karo.");
+  }
+}, 200);
+
+// ── Main login ──
+async function handleLogin(accessToken) {
+  setBusy(true); hideErr();
+  const devId = dfp();
+  try {
+    const res  = await fetch(`${API_BASE}/api/auth`, {
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({ access_token:accessToken, device_id:devId }),
+    });
+    const text = await res.text();
+    let data;
+    try { data = JSON.parse(text); } catch(e){ data = null; }
+
+    if (res.status === 429) { showErr("Bahut zyada requests. 1 minute baad try karo."); setBusy(false); return; }
+    if (res.status >= 500)  { showErr("Server error (" + res.status + "). 30 sec baad try karo."); setBusy(false); return; }
+    if (!res.ok) {
+      const detail = data && data.detail ? data.detail : "Dobara try karo.";
+      // Check if server says account is banned/blocked
+      if (detail === "banned")  { showStatusOverlay("banned");  setBusy(false); return; }
+      if (detail === "blocked") { showStatusOverlay("blocked"); setBusy(false); return; }
+      if (detail === "paused")  { showStatusOverlay("paused");  setBusy(false); return; }
+      showErr("Login fail: " + detail);
+      setBusy(false); return;
+    }
+
+    if (data && data.status === "success" && data.user) {
+      const u = data.user;
+      // Double-check status from response
+      if (u.status === "banned")  { showStatusOverlay("banned");  setBusy(false); return; }
+      if (u.status === "blocked") { showStatusOverlay("blocked"); setBusy(false); return; }
+      if (u.status === "paused")  { showStatusOverlay("paused");  setBusy(false); return; }
+
+      saveSession(u, devId);
+      try {
+        localStorage.setItem("_ud", JSON.stringify({
+          uid:                 u.uid || "",
+          name:                u.name || "",
+          picture:             u.picture || "",
+          session_signature:   data.session_signature || "",
+          subscription_status: u.subscription_status || "none",
+        }));
+      } catch(e){}
+
+      // Telegram verification removed: subscribed -> home, everyone else -> payment.
+      if (u.subscription_status === "active" || u.subscription_status === "free") {
+        window.location.replace("/home");
+      } else {
+        window.location.replace("/payment");
+      }
+    } else {
+      showErr("Login fail hua. Dobara try karo.");
+      setBusy(false);
+    }
+  } catch(err) {
+    if (!navigator.onLine) {
+      showErr("Internet nahi hai. Connection check karo.");
+    } else {
+      showErr("Server se connect nahi ho pa raha. VPS/Vercel check karo.");
+    }
+    setBusy(false);
+  }
+}
+
+loginBtn.addEventListener("click", () => {
+  hideErr();
+  if (!googleReady || !tokenClient) {
+    pendingLogin=true; setBusy(true);
+    loginBtn.querySelector(".btn-label").textContent="Loading...";
+    return;
+  }
+  setBusy(true);
+  tokenClient.requestAccessToken();
+});
+
+// ── Background status check (once on load — login page) ──
+(function(){
+  function getUd(){ try{return JSON.parse(localStorage.getItem("_ud")||"null");}catch(e){return null;} }
+  async function check(){
+    const u=getUd();
+    if(!u||!u.uid||!u.session_signature) return;
+    try{
+      const r=await fetch(`${API_BASE}/api/account-status`,{
+        method:"POST",headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({uid:u.uid,session_signature:u.session_signature})
+      });
+      if(!r.ok) return;
+      const d=await r.json();
+      const as=d.account_status||"active";
+      if(as==="banned"||as==="blocked"||as==="paused") showStatusOverlay(as);
+    }catch(e){}
+  }
+  check();
+})();
+</script>
+</body>
+</html>

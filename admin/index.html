@@ -1,0 +1,1500 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel — DRAGO PREDICTOR</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --primary: #8B5CF6;
+            --primary-hover: #7C3AED;
+            --bg-color: #F3F4F6;
+            --card-bg: #FFFFFF;
+            --text-main: #111827;
+            --text-muted: #6B7280;
+            --border-color: #E5E7EB;
+            --danger: #EF4444;
+            --danger-hover: #DC2626;
+            --warn: #F59E0B;
+            --warn-hover: #D97706;
+            --success: #10B981;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 1rem;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1000px;
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            padding-bottom: 2px;
+        }
+        .tab-btn {
+            flex: 1;
+            min-width: 110px;
+            background: var(--card-bg);
+            color: var(--text-muted);
+            border: 1px solid var(--border-color);
+            padding: 0.7rem 0.8rem;
+            font-size: 0.85rem;
+            font-weight: 600;
+            border-radius: 10px;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+        .tab-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+            box-shadow: 0 4px 6px -1px rgba(139, 92, 246, 0.3);
+        }
+
+        .panel {
+            display: none;
+            background: var(--card-bg);
+            padding: 1.25rem;
+            border-radius: 12px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.06), 0 4px 6px -2px rgba(0, 0, 0, 0.04);
+        }
+        .panel.active { display: block; }
+
+        /* Header */
+        .header-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.25rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border-color);
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        h2 {
+            margin: 0;
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        /* Buttons */
+        button, .btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.55rem 1rem;
+            font-size: 0.82rem;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            transition: all 0.15s ease;
+            box-shadow: 0 4px 6px -1px rgba(139, 92, 246, 0.25);
+            white-space: nowrap;
+        }
+        button:active { transform: scale(0.97); }
+        button:hover { background: var(--primary-hover); }
+        button svg { width: 15px; height: 15px; flex-shrink: 0; }
+
+        .btn-sm { padding: 0.4rem 0.7rem; font-size: 0.75rem; border-radius: 6px; }
+        .btn-danger { background: var(--danger); box-shadow: 0 4px 6px -1px rgba(239,68,68,0.25); }
+        .btn-danger:hover { background: var(--danger-hover); }
+        .btn-warn { background: var(--warn); box-shadow: 0 4px 6px -1px rgba(245,158,11,0.25); }
+        .btn-warn:hover { background: var(--warn-hover); }
+        .btn-success { background: var(--success); box-shadow: 0 4px 6px -1px rgba(16,185,129,0.25); }
+        .btn-success:hover { background: #059669; }
+        .btn-muted { background: #9CA3AF; box-shadow:none; }
+        .btn-muted:hover { background: #6B7280; }
+        .btn-outline {
+            background: transparent;
+            color: var(--primary);
+            border: 1.5px solid var(--primary);
+            box-shadow: none;
+        }
+        .btn-outline:hover { background: #F5F3FF; }
+        .btn-teal { background: #0D9488; box-shadow: 0 4px 6px -1px rgba(13,148,136,0.25); }
+        .btn-teal:hover { background: #0F766E; }
+        .btn-indigo { background: #4F46E5; box-shadow: 0 4px 6px -1px rgba(79,70,229,0.25); }
+        .btn-indigo:hover { background: #4338CA; }
+
+        /* ── Mobile card list (replaces table on small screens) ── */
+        .list { display: flex; flex-direction: column; gap: 0.75rem; }
+
+        .user-card, .plan-card {
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 0.9rem;
+            background: #FAFAFB;
+        }
+
+        .user-card-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 0.5rem;
+        }
+        .user-name { font-weight: 700; font-size: 0.95rem; }
+        .user-email { font-size: 0.8rem; color: var(--text-muted); margin-top: 2px; word-break: break-all; }
+        .uid-badge {
+            background-color: #F3F4F6;
+            padding: 0.25rem 0.5rem;
+            border-radius: 6px;
+            font-family: monospace;
+            font-size: 0.72rem;
+            color: #4B5563;
+            border: 1px solid var(--border-color);
+            display: inline-block;
+            margin-top: 6px;
+            word-break: break-all;
+        }
+
+        .tg-line {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 6px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+        .tg-yes { color: #065F46; font-weight: 600; }
+        .tg-no { color: #991B1B; font-weight: 600; }
+
+        .status-badge {
+            font-size: 0.7rem;
+            font-weight: 700;
+            padding: 0.2rem 0.55rem;
+            border-radius: 999px;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+            white-space: nowrap;
+        }
+        .status-active { background: #D1FAE5; color: #065F46; }
+        .status-blocked { background: #FEE2E2; color: #991B1B; }
+        .status-banned { background: #FEE2E2; color: #991B1B; }
+        .status-paused { background: #FEF3C7; color: #92400E; }
+
+        .user-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 0.7rem;
+        }
+
+        /* Plan cards */
+        .plan-card-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 0.5rem;
+        }
+        .plan-name { font-weight: 700; font-size: 1rem; color: var(--primary); }
+        .plan-meta { font-size: 0.8rem; color: var(--text-muted); margin-top: 2px; }
+        .plan-features {
+            margin-top: 0.5rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+        }
+        .feature-tag {
+            background: #EDE9FE;
+            color: #6D28D9;
+            font-size: 0.7rem;
+            font-weight: 600;
+            padding: 0.2rem 0.5rem;
+            border-radius: 6px;
+        }
+        .plan-actions { display: flex; gap: 6px; margin-top: 0.7rem; flex-wrap: wrap; }
+        .qr-mini {
+            width: 46px; height: 46px;
+            border-radius: 6px;
+            object-fit: cover;
+            border: 1px solid var(--border-color);
+            flex-shrink: 0;
+        }
+        .plan-pay-row {
+            display:flex; align-items:center; gap:8px;
+            margin-top: 0.6rem;
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            flex-wrap: wrap;
+        }
+        .upi-chip {
+            background:#F3F4F6; border:1px solid var(--border-color);
+            border-radius:6px; padding:0.2rem 0.5rem;
+            font-family: monospace; font-size: 0.72rem; word-break: break-all;
+        }
+
+        .loading-state {
+            text-align: center;
+            padding: 2.5rem 1rem !important;
+            color: var(--text-muted);
+            font-style: italic;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 2.5rem 1rem;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        /* ── Payment cards ── */
+        .pay-card {
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 0.9rem;
+            background: #FAFAFB;
+        }
+        .pay-card.pay-pending { border-left: 3px solid var(--warn); }
+        .pay-card.pay-approved { border-left: 3px solid var(--success); }
+        .pay-card.pay-rejected { border-left: 3px solid var(--danger); }
+        .pay-card-top { display:flex; justify-content:space-between; align-items:flex-start; gap:.5rem; }
+        .pay-user { font-weight:700; font-size:.9rem; }
+        .pay-plan { font-size:.8rem; color:var(--text-muted); margin-top:2px; }
+        .pay-utr { font-family:monospace; font-size:.8rem; margin-top:5px; color:#374151; }
+        .pay-actions { display:flex; flex-wrap:wrap; gap:6px; margin-top:.65rem; }
+        .pay-status-badge { font-size:.7rem; font-weight:700; padding:.2rem .55rem; border-radius:999px; text-transform:uppercase; white-space:nowrap; }
+        .pay-pending-badge { background:#FEF3C7; color:#92400E; }
+        .pay-approved-badge { background:#D1FAE5; color:#065F46; }
+        .pay-rejected-badge { background:#FEE2E2; color:#991B1B; }
+
+        /* Search bar */
+        .search-bar { width:100%; padding:.55rem .7rem; border:1px solid var(--border-color); border-radius:8px; font-size:.9rem; font-family:inherit; background:#FAFAFB; margin-bottom:.8rem; }
+        .search-bar:focus { outline:none; border-color:var(--primary); background:#fff; }
+
+        /* ── Game cards ── */
+        .game-card {
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 0.8rem;
+            background: #FAFAFB;
+            display: flex;
+            gap: 0.85rem;
+            align-items: center;
+        }
+        .game-thumb {
+            width: 58px; height: 58px;
+            border-radius: 10px;
+            object-fit: cover;
+            border: 1px solid var(--border-color);
+            background: #EDE9FE;
+            flex-shrink: 0;
+        }
+        .game-thumb-fallback {
+            width: 58px; height: 58px;
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+            background: #EDE9FE;
+            color: var(--primary);
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 700; font-size: 1.1rem;
+            flex-shrink: 0;
+        }
+        .game-info { flex: 1; min-width: 0; }
+        .game-name { font-weight: 700; font-size: 0.95rem; }
+        .game-slug { font-size: 0.72rem; color: var(--text-muted); font-family: monospace; margin-top: 2px; word-break: break-all; }
+        .cat-badge {
+            display: inline-block;
+            font-size: 0.68rem; font-weight: 700;
+            padding: 0.18rem 0.5rem; border-radius: 999px;
+            text-transform: uppercase; letter-spacing: .03em;
+            margin-top: 5px;
+        }
+        .cat-30s { background: #DBEAFE; color: #1E40AF; }
+        .cat-1min { background: #FEF3C7; color: #92400E; }
+        .game-actions { display: flex; flex-direction: column; gap: 6px; flex-shrink: 0; }
+
+        /* ── Settings ── */
+        .setting-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            background: #FAFAFB;
+        }
+        .setting-info { flex: 1; }
+        .setting-title { font-weight: 700; font-size: 0.95rem; }
+        .setting-desc { font-size: 0.8rem; color: var(--text-muted); margin-top: 3px; line-height: 1.45; }
+        .setting-state {
+            font-size: 0.72rem; font-weight: 700; margin-top: 6px;
+            text-transform: uppercase; letter-spacing: .03em;
+        }
+        .state-on { color: #065F46; }
+        .state-off { color: #991B1B; }
+
+        /* Toggle switch */
+        .switch { position: relative; display: inline-block; width: 52px; height: 30px; flex-shrink: 0; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider {
+            position: absolute; cursor: pointer; inset: 0;
+            background-color: #CBD5E1; transition: .25s; border-radius: 999px;
+        }
+        .slider:before {
+            position: absolute; content: ""; height: 22px; width: 22px;
+            left: 4px; bottom: 4px; background-color: white;
+            transition: .25s; border-radius: 50%;
+            box-shadow: 0 1px 3px rgba(0,0,0,.2);
+        }
+        .switch input:checked + .slider { background-color: var(--success); }
+        .switch input:checked + .slider:before { transform: translateX(22px); }
+        .switch input:disabled + .slider { opacity: .55; cursor: not-allowed; }
+
+        /* ── Modal ── */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(17, 24, 39, 0.5);
+            z-index: 1000;
+            align-items: flex-end;
+            justify-content: center;
+        }
+        .modal-overlay.show { display: flex; }
+        .modal-box {
+            background: var(--card-bg);
+            width: 100%;
+            max-width: 480px;
+            border-radius: 16px 16px 0 0;
+            padding: 1.25rem;
+            max-height: 90vh;
+            overflow-y: auto;
+            animation: slideUp 0.25s ease-out;
+        }
+        @media (min-width: 640px) {
+            .modal-overlay { align-items: center; }
+            .modal-box { border-radius: 16px; margin: 1rem; }
+        }
+        @keyframes slideUp {
+            from { transform: translateY(30px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        .modal-title {
+            font-size: 1.05rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .modal-close {
+            background: none;
+            box-shadow: none;
+            color: var(--text-muted);
+            padding: 0.2rem;
+            font-size: 1.2rem;
+            line-height: 1;
+        }
+        .modal-close:hover { background: #F3F4F6; color: var(--text-main); }
+
+        .form-group { margin-bottom: 0.9rem; }
+        .form-group label {
+            display: block;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            margin-bottom: 0.3rem;
+        }
+        .form-group input, .form-group textarea, .form-group select {
+            width: 100%;
+            padding: 0.6rem 0.7rem;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-family: inherit;
+            background: #FAFAFB;
+        }
+        .form-group input:focus, .form-group textarea:focus, .form-group select:focus {
+            outline: none;
+            border-color: var(--primary);
+            background: #fff;
+        }
+        .form-row { display: flex; gap: 0.6rem; }
+        .form-row .form-group { flex: 1; }
+        .modal-actions {
+            display: flex;
+            gap: 0.6rem;
+            margin-top: 1.2rem;
+        }
+        .modal-actions button { flex: 1; }
+
+        .img-preview {
+            margin-top: 0.5rem;
+            width: 100%;
+            max-width: 180px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            display: none;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 1rem;
+            left: 50%;
+            transform: translateX(-50%) translateY(60px);
+            background: #111827;
+            color: #fff;
+            padding: 0.7rem 1.2rem;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            z-index: 1100;
+            opacity: 0;
+            transition: all 0.25s ease;
+            max-width: 90%;
+            text-align: center;
+        }
+        .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+        .toast.error { background: var(--danger); }
+        .toast.success { background: var(--success); }
+    </style>
+</head>
+<body>
+
+<div class="container">
+
+    <div class="tabs">
+        <button class="tab-btn active" data-tab="users" onclick="switchTab('users')">Users</button>
+        <button class="tab-btn" data-tab="payments" onclick="switchTab('payments')">Payments</button>
+        <button class="tab-btn" data-tab="plans" onclick="switchTab('plans')">Plans</button>
+        <button class="tab-btn" data-tab="games" onclick="switchTab('games')">Games</button>
+        <button class="tab-btn" data-tab="settings" onclick="switchTab('settings')">Settings</button>
+    </div>
+
+    <!-- ══════════════ USERS PANEL ════��═════════ -->
+    <div class="panel active" id="usersPanel">
+        <div class="header-section">
+            <h2>User Management</h2>
+            <button onclick="loadUsers()">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                Refresh
+            </button>
+        </div>
+        <input type="text" class="search-bar" id="userSearch" placeholder="Search by name, email or UID..." oninput="filterUsers()">
+        <div class="list" id="userBody">
+            <div class="loading-state">Fetching users securely...</div>
+        </div>
+    </div>
+
+    <!-- ══════════════ PAYMENTS PANEL ══════════════ -->
+    <div class="panel" id="paymentsPanel">
+        <div class="header-section">
+            <h2>Payment Requests</h2>
+            <div style="display:flex;gap:.5rem;flex-wrap:wrap">
+                <select id="payFilter" onchange="renderPayments()" style="padding:.45rem .7rem;border:1px solid var(--border-color);border-radius:8px;font-size:.82rem;font-family:inherit;background:#FAFAFB;cursor:pointer">
+                    <option value="all">All</option>
+                    <option value="pending" selected>Pending</option>
+                    <option value="approved">Approved</option>
+                    <option value="rejected">Rejected</option>
+                </select>
+                <button onclick="loadPayments()">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                    Refresh
+                </button>
+            </div>
+        </div>
+        <div class="list" id="payBody"><div class="loading-state">Loading payments...</div></div>
+    </div>
+
+    <!-- ══════════════ PLANS PANEL ══════════════ -->
+    <div class="panel" id="plansPanel">
+        <div class="header-section">
+            <h2>Plan & Payment Management</h2>
+            <button onclick="openPlanModal()">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                </svg>
+                Add Plan
+            </button>
+        </div>
+        <div class="list" id="planBody"></div>
+    </div>
+
+    <!-- ══════════════ GAMES PANEL ══════════════ -->
+    <div class="panel" id="gamesPanel">
+        <div class="header-section">
+            <h2>Game Management</h2>
+            <button onclick="openGameModal()">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                </svg>
+                Add Game
+            </button>
+        </div>
+        <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:.8rem">
+            <select id="gameCatFilter" onchange="renderGames()" style="padding:.45rem .7rem;border:1px solid var(--border-color);border-radius:8px;font-size:.82rem;font-family:inherit;background:#FAFAFB;cursor:pointer">
+                <option value="all">All Categories</option>
+                <option value="30s">30 Seconds</option>
+                <option value="1min">1 Minute</option>
+            </select>
+            <button class="btn-outline" onclick="loadGames()">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                Refresh
+            </button>
+        </div>
+        <div class="list" id="gameBody"><div class="loading-state">Loading games...</div></div>
+    </div>
+
+    <!-- ══════════════ SETTINGS PANEL ══════════════ -->
+    <div class="panel" id="settingsPanel">
+        <div class="header-section">
+            <h2>App Settings</h2>
+            <button onclick="loadSettings()">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                </svg>
+                Refresh
+            </button>
+        </div>
+
+        <div class="setting-row">
+            <div class="setting-info">
+                <div class="setting-title">Telegram Verification</div>
+                <div class="setting-desc">
+                    When ON, every user (new &amp; old) must verify via the Telegram bot and join the channel before reaching the plan page.
+                    Turn OFF to skip Telegram verification entirely for everyone.
+                </div>
+                <div class="setting-state" id="tgVerifyState">Loading…</div>
+            </div>
+            <label class="switch">
+                <input type="checkbox" id="tgVerifyToggle" disabled onchange="saveTgVerify(this.checked)">
+                <span class="slider"></span>
+            </label>
+        </div>
+    </div>
+
+</div>
+
+<!-- ══════════════ USER PLAN CHANGE MODAL ══════════════ -->
+<div class="modal-overlay" id="userPlanModalOverlay">
+    <div class="modal-box">
+        <div class="modal-title">
+            <span>Change / Delete User Plan</span>
+            <button class="modal-close" onclick="closeUserPlanModal()">&#x2715;</button>
+        </div>
+        <input type="hidden" id="upUid">
+        <p id="upUserInfo" style="font-size:.85rem;color:var(--text-muted);margin-bottom:1rem"></p>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label>Plan Name</label>
+                <input type="text" id="upPlanName" placeholder="e.g. 299 Rs 3 Days">
+            </div>
+            <div class="form-group">
+                <label>Duration</label>
+                <input type="text" id="upPlanDur" placeholder="3 Days">
+            </div>
+        </div>
+        <div class="form-group">
+            <label>Subscription Status</label>
+            <select id="upSubStatus">
+                <option value="active">Active</option>
+                <option value="none">None (No Plan)</option>
+                <option value="pending">Pending</option>
+                <option value="rejected">Rejected</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Expires At (leave blank to keep current)</label>
+            <input type="date" id="upExpiry">
+        </div>
+
+        <div class="modal-actions" style="flex-direction:column;gap:.5rem">
+            <div style="display:flex;gap:.5rem">
+                <button class="btn-muted" style="flex:1" onclick="closeUserPlanModal()">Cancel</button>
+                <button class="btn-success" style="flex:2" onclick="saveUserPlan()">Save Plan</button>
+            </div>
+            <button class="btn-danger" onclick="deleteUserPlan()">Delete Plan (Reset to No Plan)</button>
+        </div>
+    </div>
+</div>
+
+<!-- ══════════════ PLAN ADD/EDIT MODAL ══════════════ -->
+<div class="modal-overlay" id="planModalOverlay">
+    <div class="modal-box">
+        <div class="modal-title">
+            <span id="planModalTitle">Add Plan</span>
+            <button class="modal-close" onclick="closePlanModal()">✕</button>
+        </div>
+
+        <input type="hidden" id="planIndex">
+
+        <div class="form-row">
+            <div class="form-group">
+                <label>Price (e.g. 299 ₹)</label>
+                <input type="text" id="planPrice" placeholder="299 ₹">
+            </div>
+            <div class="form-group">
+                <label>Duration / Label</label>
+                <input type="text" id="planDuration" placeholder="3 Days">
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>Features (comma separated)</label>
+            <textarea id="planFeatures" rows="3" placeholder="ADVANCE AI, DAILY SCRIPT, BEST SERVER"></textarea>
+        </div>
+
+        <div class="form-group">
+            <label>Discount Text</label>
+            <input type="text" id="planDiscount" placeholder="15% off">
+        </div>
+
+        <hr style="border:none;border-top:1px solid var(--border-color); margin: 1rem 0;">
+
+        <div class="form-group">
+            <label>UPI ID for this plan</label>
+            <input type="text" id="planUpi" placeholder="example@upi">
+        </div>
+
+        <div class="form-group">
+            <label>Payment QR Code Image URL</label>
+            <input type="text" id="planQr" placeholder="https://..." oninput="previewQr(this.value)">
+            <img id="qrPreview" class="img-preview">
+        </div>
+
+        <div class="modal-actions">
+            <button class="btn-muted" onclick="closePlanModal()">Cancel</button>
+            <button class="btn-success" onclick="savePlan()">Save Plan</button>
+        </div>
+    </div>
+</div>
+
+<!-- ══════════════ GAME ADD/EDIT MODAL ══════════════ -->
+<div class="modal-overlay" id="gameModalOverlay">
+    <div class="modal-box">
+        <div class="modal-title">
+            <span id="gameModalTitle">Add Game</span>
+            <button class="modal-close" onclick="closeGameModal()">✕</button>
+        </div>
+
+        <input type="hidden" id="gameId">
+
+        <div class="form-group">
+            <label>Game Name</label>
+            <input type="text" id="gameName" placeholder="e.g. Wingo Lite">
+        </div>
+
+        <div class="form-group">
+            <label>Category</label>
+            <select id="gameCategory">
+                <option value="30s">30 Seconds</option>
+                <option value="1min">1 Minute</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>Game Image URL</label>
+            <input type="text" id="gameImage" placeholder="https://..." oninput="previewGameImg(this.value)">
+            <img id="gameImgPreview" class="img-preview">
+        </div>
+
+        <div class="form-group">
+            <label>Game Link (URL the game opens)</label>
+            <input type="text" id="gameLink" placeholder="https://...">
+        </div>
+
+        <div class="modal-actions">
+            <button class="btn-muted" onclick="closeGameModal()">Cancel</button>
+            <button class="btn-success" onclick="saveGame()">Save Game</button>
+        </div>
+    </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getDatabase, ref, get, set, update, remove, push } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+    // ⬇️ APNI FIREBASE apiKey YAHAN DAALO (baaki values aapke project ki hain) ⬇️
+    const firebaseConfig = {
+        apiKey: "PASTE_YOUR_FIREBASE_API_KEY_HERE",
+        authDomain: "quantum-anlyzer.firebaseapp.com",
+        databaseURL: "https://quantum-anlyzer-default-rtdb.firebaseio.com",
+        projectId: "quantum-anlyzer",
+        storageBucket: "quantum-anlyzer.appspot.com",
+        messagingSenderId: "YOUR_ID",
+        appId: "quantum-anlyzer"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    // ════════════════════════════════════════════════════════
+    //  TOAST
+    // ════════════════════════════════════════════════════════
+    window.showToast = function(msg, type = "") {
+        const t = document.getElementById("toast");
+        t.textContent = msg;
+        t.className = "toast show " + type;
+        setTimeout(() => { t.className = "toast" + (type ? " " + type : ""); }, 2500);
+    };
+
+    // ════════════════════════════════════════════════════════
+    //  TABS
+    // ════════════════════════════════════════════════════════
+    window.switchTab = function(tab) {
+        document.querySelectorAll(".tab-btn").forEach(b => b.classList.toggle("active", b.dataset.tab === tab));
+        document.getElementById("usersPanel").classList.toggle("active", tab === "users");
+        document.getElementById("paymentsPanel").classList.toggle("active", tab === "payments");
+        document.getElementById("plansPanel").classList.toggle("active", tab === "plans");
+        document.getElementById("gamesPanel").classList.toggle("active", tab === "games");
+        document.getElementById("settingsPanel").classList.toggle("active", tab === "settings");
+        if (tab === "plans") loadPlans();
+        if (tab === "settings") loadSettings();
+        if (tab === "payments") loadPayments();
+        if (tab === "games") loadGames();
+    };
+
+    // ════════════════════════════════════════════════════════
+    //  USERS — load + render
+    // ════════════════════════════════════════════════════════
+    let allUsers = {};
+
+    window.loadUsers = async function() {
+        const body = document.getElementById('userBody');
+        body.innerHTML = '<div class="loading-state">Fetching users securely...</div>';
+        try {
+            const snapshot = await get(ref(db, 'users'));
+            if (snapshot.exists()) {
+                allUsers = snapshot.val();
+                renderUsers();
+            } else {
+                body.innerHTML = '<div class="empty-state">No users found in database.</div>';
+            }
+        } catch (e) {
+            body.innerHTML = `<div class="empty-state" style="color:#EF4444;">Error: ${escapeHtml(e.message)}</div>`;
+        }
+    };
+
+    window.filterUsers = function() {
+        renderUsers();
+    };
+
+    function renderUsers() {
+        const body = document.getElementById('userBody');
+        const q = (document.getElementById('userSearch')?.value || '').toLowerCase();
+        const uids = Object.keys(allUsers).filter(uid => {
+            if (!q) return true;
+            const u = allUsers[uid];
+            return (u.name || '').toLowerCase().includes(q) ||
+                   (u.email || '').toLowerCase().includes(q) ||
+                   uid.toLowerCase().includes(q);
+        });
+        if (uids.length === 0) {
+            body.innerHTML = '<div class="empty-state">No matching users.</div>';
+            return;
+        }
+        body.innerHTML = '';
+        uids.forEach(uid => {
+            const user = allUsers[uid];
+            const status = user.status || 'active';
+            body.innerHTML += renderUserCard(uid, user, status);
+        });
+    }
+
+    function renderUserCard(uid, user, status) {
+        const statusClass = { active:'status-active', blocked:'status-blocked', banned:'status-banned', paused:'status-paused' }[status] || 'status-active';
+        const tgVerified = !!user.telegram_verified;
+        const tgLine = tgVerified
+            ? `<div class="tg-line"><span class="tg-yes">&#x2713; Telegram verified</span>${user.telegram_username ? ' <span>@' + escapeHtml(user.telegram_username) + '</span>' : ''}${user.telegram_id ? ' <span class="uid-badge" style="margin-top:0">' + escapeHtml(String(user.telegram_id)) + '</span>' : ''}</div>`
+            : `<div class="tg-line"><span class="tg-no">&#x2717; Telegram not verified</span></div>`;
+        const hasPlan = user.subscription_status === 'active' && user.plan;
+        const expMs = user.plan_expires_at ? parseInt(user.plan_expires_at) : 0;
+        const expStr = expMs ? new Date(expMs).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}) : '—';
+        const daysLeft = expMs ? Math.max(0, Math.ceil((expMs - Date.now()) / 86400000)) : 0;
+        const plan = hasPlan
+            ? `<div class="tg-line"><span>Plan:</span><span class="feature-tag">${escapeHtml(user.plan)} ${escapeHtml(user.plan_duration || '')}</span><span style="font-size:.72rem;color:var(--text-muted)">expires ${expStr} (${daysLeft}d left)</span></div>`
+            : `<div class="tg-line" style="color:#9CA3AF;font-size:.75rem">No active plan</div>`;
+        return `
+        <div class="user-card" data-uid="${escapeHtml(uid)}">
+            <div class="user-card-top">
+                <div>
+                    <div class="user-name">${escapeHtml(user.name || 'N/A')}</div>
+                    <div class="user-email">${escapeHtml(user.email || 'N/A')}</div>
+                    <div class="uid-badge">${escapeHtml(uid)}</div>
+                    ${tgLine}
+                    ${plan}
+                </div>
+                <span class="status-badge ${statusClass}">${escapeHtml(status)}</span>
+            </div>
+            <div class="user-actions">
+                <button class="btn-sm btn-success" onclick="setUserStatus('${escapeHtml(uid)}','active')">Activate</button>
+                <button class="btn-sm btn-warn" onclick="setUserStatus('${escapeHtml(uid)}','paused')">Pause</button>
+                <button class="btn-sm btn-danger" onclick="setUserStatus('${escapeHtml(uid)}','blocked')">Block</button>
+                <button class="btn-sm" style="background:#1F2937;" onclick="setUserStatus('${escapeHtml(uid)}','banned')">Ban</button>
+                <button class="btn-sm btn-teal" onclick="openUserPlanModal('${escapeHtml(uid)}')">Change Plan</button>
+            </div>
+        </div>`;
+    }
+
+    // ════════════════════════════════════════════════════════
+    //  USERS — set status (active / paused / blocked / banned)
+    // ════════════════════════════════════════════════════════
+    window.setUserStatus = async function(uid, status) {
+        try {
+            await update(ref(db, `users/${uid}`), {
+                status: status,
+                status_updated_at: { ".sv": "timestamp" }
+            });
+            const card = document.querySelector(`.user-card[data-uid="${cssEscape(uid)}"]`);
+            if (card) {
+                const badge = card.querySelector('.status-badge');
+                badge.className = 'status-badge ' + ({
+                    active: 'status-active',
+                    blocked: 'status-blocked',
+                    banned: 'status-banned',
+                    paused: 'status-paused'
+                }[status] || 'status-active');
+                badge.textContent = status;
+            }
+            showToast(`User ${status}`, 'success');
+        } catch (e) {
+            showToast('Error: ' + e.message, 'error');
+        }
+    };
+
+    // ════════════════════════════════════════════════════════
+    //  USER PLAN — change / delete
+    // ════════════════════════════════════════════════════════
+    window.openUserPlanModal = function(uid) {
+        const user = allUsers[uid] || {};
+        document.getElementById('upUid').value = uid;
+        document.getElementById('upUserInfo').textContent = (user.name || 'Unknown') + ' — ' + (user.email || uid);
+        document.getElementById('upPlanName').value = user.plan || '';
+        document.getElementById('upPlanDur').value = user.plan_duration || '';
+        document.getElementById('upSubStatus').value = user.subscription_status || 'none';
+        // Pre-fill expiry date if available
+        const expMs = user.plan_expires_at ? parseInt(user.plan_expires_at) : 0;
+        if (expMs) {
+            const d = new Date(expMs);
+            document.getElementById('upExpiry').value = d.toISOString().split('T')[0];
+        } else {
+            document.getElementById('upExpiry').value = '';
+        }
+        document.getElementById('userPlanModalOverlay').classList.add('show');
+    };
+
+    window.closeUserPlanModal = function() {
+        document.getElementById('userPlanModalOverlay').classList.remove('show');
+    };
+
+    window.saveUserPlan = async function() {
+        const uid = document.getElementById('upUid').value;
+        const planName = document.getElementById('upPlanName').value.trim();
+        const planDur = document.getElementById('upPlanDur').value.trim();
+        const subStatus = document.getElementById('upSubStatus').value;
+        const expiryStr = document.getElementById('upExpiry').value;
+        const expiryMs = expiryStr ? new Date(expiryStr).getTime() : null;
+
+        const updates = {
+            status: subStatus === 'active' ? 'active' : (allUsers[uid]?.status || 'active'),
+            subscription_status: subStatus,
+            plan: planName,
+            plan_duration: planDur,
+        };
+        if (expiryMs) updates.plan_expires_at = expiryMs;
+
+        try {
+            await update(ref(db, `users/${uid}`), updates);
+            if (allUsers[uid]) Object.assign(allUsers[uid], updates);
+            renderUsers();
+            closeUserPlanModal();
+            showToast('Plan updated for user', 'success');
+        } catch (e) {
+            showToast('Error: ' + e.message, 'error');
+        }
+    };
+
+    window.deleteUserPlan = async function() {
+        const uid = document.getElementById('upUid').value;
+        if (!confirm('Delete plan for this user? They will lose access.')) return;
+        const updates = {
+            subscription_status: 'none',
+            plan: '',
+            plan_duration: '',
+            plan_expires_at: 0,
+            plan_index: null,
+        };
+        try {
+            await update(ref(db, `users/${uid}`), updates);
+            if (allUsers[uid]) Object.assign(allUsers[uid], updates);
+            renderUsers();
+            closeUserPlanModal();
+            showToast('Plan deleted', 'success');
+        } catch (e) {
+            showToast('Error: ' + e.message, 'error');
+        }
+    };
+
+    // ════════════════════════════════════════════════════════
+    //  PAYMENTS — load + render + approve/reject
+    // ════════════════════════════════════════════════════════
+    let allPayments = {};  // { uid: { payKey: payObj, ... }, ... }
+
+    window.loadPayments = async function() {
+        const body = document.getElementById('payBody');
+        body.innerHTML = '<div class="loading-state">Loading payments...</div>';
+        try {
+            // payments are stored under users/{uid}/payments/{key}
+            const usersSnap = await get(ref(db, 'users'));
+            allPayments = {};
+            if (usersSnap.exists()) {
+                const users = usersSnap.val();
+                Object.keys(users).forEach(uid => {
+                    const pays = users[uid].payments || {};
+                    Object.keys(pays).forEach(k => {
+                        allPayments[uid + '::' + k] = {
+                            ...pays[k],
+                            _uid: uid,
+                            _key: k,
+                            _userName: users[uid].name || uid,
+                            _userEmail: users[uid].email || '',
+                        };
+                    });
+                });
+            }
+            renderPayments();
+        } catch(e) {
+            body.innerHTML = `<div class="empty-state" style="color:#EF4444;">Error: ${escapeHtml(e.message)}</div>`;
+        }
+    };
+
+    window.renderPayments = function() {
+        const body = document.getElementById('payBody');
+        const filter = document.getElementById('payFilter')?.value || 'all';
+        const keys = Object.keys(allPayments).filter(k => {
+            const p = allPayments[k];
+            return filter === 'all' || (p.status || 'pending') === filter;
+        }).sort((a, b) => (allPayments[b].submitted_at || 0) - (allPayments[a].submitted_at || 0));
+
+        if (keys.length === 0) {
+            body.innerHTML = `<div class="empty-state">No ${filter === 'all' ? '' : filter + ' '}payments found.</div>`;
+            return;
+        }
+        body.innerHTML = '';
+        keys.forEach(k => {
+            const p = allPayments[k];
+            const pStatus = p.status || 'pending';
+            const pClass = { pending:'pay-pending', approved:'pay-approved', rejected:'pay-rejected' }[pStatus] || 'pay-pending';
+            const badgeClass = { pending:'pay-pending-badge', approved:'pay-approved-badge', rejected:'pay-rejected-badge' }[pStatus] || 'pay-pending-badge';
+            const date = p.submitted_at ? new Date(p.submitted_at).toLocaleString('en-IN') : '—';
+            const planLabel = `${escapeHtml(p.plan || '')} ${escapeHtml(p.duration || '')}`.trim();
+            const actions = pStatus === 'pending'
+                ? `<button class="btn-sm btn-success" onclick="approvePayment('${escapeAttr(k)}')">Approve</button>
+                   <button class="btn-sm btn-danger" onclick="rejectPayment('${escapeAttr(k)}')">Reject</button>`
+                : `<button class="btn-sm btn-muted" onclick="resetPayment('${escapeAttr(k)}')">Reset to Pending</button>`;
+            body.innerHTML += `
+            <div class="pay-card ${pClass}" data-pkey="${escapeHtml(k)}">
+                <div class="pay-card-top">
+                    <div>
+                        <div class="pay-user">${escapeHtml(p._userName)} <span style="font-size:.75rem;color:var(--text-muted)">${escapeHtml(p._userEmail)}</span></div>
+                        <div class="pay-plan">${planLabel || 'Unknown Plan'}</div>
+                        <div class="pay-utr">UTR: ${escapeHtml(p.utr || '—')} &nbsp;|&nbsp; ${date}</div>
+                    </div>
+                    <span class="pay-status-badge ${badgeClass}">${pStatus}</span>
+                </div>
+                <div class="pay-actions">${actions}</div>
+            </div>`;
+        });
+    };
+
+    window.approvePayment = async function(compositeKey) {
+        const p = allPayments[compositeKey];
+        if (!p) return;
+        if (!confirm(`Approve payment for ${p._userName}? Plan: ${p.plan || ''} ${p.duration || ''}`)) return;
+        try {
+            // 1. Mark payment as approved
+            await update(ref(db, `users/${p._uid}/payments/${p._key}`), { status: 'approved' });
+            // 2. Activate user plan (simple version — no carry-over from admin, direct set)
+            const nowMs = Date.now();
+            const durDays = parseDurationToDays(p.duration || '');
+            const newExpiry = nowMs + durDays * 86400000;
+            await update(ref(db, `users/${p._uid}`), {
+                status: 'active',
+                subscription_status: 'active',
+                plan: p.plan || '',
+                plan_duration: p.duration || '',
+                plan_started_at: nowMs,
+                plan_expires_at: newExpiry,
+            });
+            allPayments[compositeKey].status = 'approved';
+            if (allUsers[p._uid]) {
+                Object.assign(allUsers[p._uid], { subscription_status:'active', plan: p.plan||'', plan_duration: p.duration||'', plan_expires_at: newExpiry });
+            }
+            renderPayments();
+            showToast('Payment approved and plan activated', 'success');
+        } catch(e) {
+            showToast('Error: ' + e.message, 'error');
+        }
+    };
+
+    window.rejectPayment = async function(compositeKey) {
+        const p = allPayments[compositeKey];
+        if (!p) return;
+        if (!confirm(`Reject payment for ${p._userName}?`)) return;
+        try {
+            await update(ref(db, `users/${p._uid}/payments/${p._key}`), { status: 'rejected' });
+            await update(ref(db, `users/${p._uid}`), { subscription_status: 'rejected' });
+            allPayments[compositeKey].status = 'rejected';
+            renderPayments();
+            showToast('Payment rejected', 'success');
+        } catch(e) {
+            showToast('Error: ' + e.message, 'error');
+        }
+    };
+
+    window.resetPayment = async function(compositeKey) {
+        const p = allPayments[compositeKey];
+        if (!p) return;
+        try {
+            await update(ref(db, `users/${p._uid}/payments/${p._key}`), { status: 'pending' });
+            await update(ref(db, `users/${p._uid}`), { subscription_status: 'pending' });
+            allPayments[compositeKey].status = 'pending';
+            renderPayments();
+            showToast('Reset to pending', 'success');
+        } catch(e) {
+            showToast('Error: ' + e.message, 'error');
+        }
+    };
+
+    function parseDurationToDays(d) {
+        if (!d) return 0;
+        const s = d.toLowerCase();
+        if (s.includes('life') || s.includes('unlimited')) return 36500;
+        const m = s.match(/(\d+)/); const n = m ? parseInt(m[1]) : 1;
+        if (s.includes('year')) return n * 365;
+        if (s.includes('month')) return n * 30;
+        if (s.includes('week')) return n * 7;
+        return n;
+    }
+
+    // ════════════════════════════════════════════════════════
+    //  PLANS — load + render
+    // ════════════════════════════════════════════════════════
+    let plansCache = [];
+
+    window.loadPlans = async function() {
+        const body = document.getElementById('planBody');
+        body.innerHTML = '<div class="loading-state">Loading plans...</div>';
+
+        try {
+            const snapshot = await get(ref(db, 'plans'));
+            if (snapshot.exists()) {
+                plansCache = snapshot.val();
+            } else {
+                // seed with defaults from payment.html if nothing exists yet
+                plansCache = [
+                    { p: "FREE", d: "", f: ["Limited Resources", "Inbuild Platform", "1 Script"], discount: "", upi: "", qr: "" },
+                    { p: "299 ₹", d: "3 Days", f: ["ADVANCE AI", "DAILY SCRIPT", "BEST SERVER", "24x7 SUPPORT", "AD FREE", "ALL GAME SUPPORTED"], discount: "15% off", upi: "", qr: "" },
+                    { p: "349 ₹", d: "3 Days +", f: ["ADVANCE AI", "DAILY SCRIPT", "BEST SERVER", "24x7 SUPPORT", "AD FREE", "ALL GAME SUPPORTED"], discount: "15% off", upi: "", qr: "" },
+                    { p: "549 ₹", d: "7 Days", f: ["ADVANCE AI", "DAILY SCRIPT", "BEST SERVER", "24x7 SUPPORT", "AD FREE", "ALL GAME SUPPORTED"], discount: "15% off", upi: "", qr: "" },
+                    { p: "600 ₹", d: "7 Days +", f: ["ADVANCE AI", "DAILY SCRIPT", "BEST SERVER", "24x7 SUPPORT", "AD FREE", "ALL GAME SUPPORTED"], discount: "15% off", upi: "", qr: "" },
+                    { p: "999 ₹", d: "15 Days", f: ["ADVANCE AI", "DAILY SCRIPT", "BEST SERVER", "24x7 SUPPORT", "AD FREE", "ALL GAME SUPPORTED"], discount: "15% off", upi: "", qr: "" },
+                    { p: "1111 ₹", d: "15 Days +", f: ["ADVANCE AI", "DAILY SCRIPT", "BEST SERVER", "24x7 SUPPORT", "AD FREE", "ALL GAME SUPPORTED"], discount: "15% off", upi: "", qr: "" },
+                    { p: "1999 ₹", d: "30 Days +", f: ["ADVANCE AI", "DAILY SCRIPT", "BEST SERVER", "24x7 SUPPORT", "AD FREE", "ALL GAME SUPPORTED"], discount: "15% off", upi: "", qr: "" }
+                ];
+                await set(ref(db, 'plans'), plansCache);
+            }
+            renderPlans();
+        } catch (e) {
+            body.innerHTML = `<div class="empty-state" style="color:#EF4444;">Error: ${escapeHtml(e.message)}</div>`;
+        }
+    };
+
+    function renderPlans() {
+        const body = document.getElementById('planBody');
+        if (!plansCache || plansCache.length === 0) {
+            body.innerHTML = '<div class="empty-state">No plans yet. Tap "Add Plan" to create one.</div>';
+            return;
+        }
+        body.innerHTML = '';
+        plansCache.forEach((plan, idx) => {
+            if (!plan) return;
+            const features = (plan.f || []).map(f => `<span class="feature-tag">${escapeHtml(f)}</span>`).join('');
+            const qrBlock = plan.qr
+                ? `<img src="${escapeAttr(plan.qr)}" class="qr-mini" onerror="this.style.display='none'">`
+                : '';
+            const upiBlock = plan.upi
+                ? `<span class="upi-chip">${escapeHtml(plan.upi)}</span>`
+                : `<span class="upi-chip" style="color:#9CA3AF;">No UPI set</span>`;
+
+            body.innerHTML += `
+            <div class="plan-card" data-idx="${idx}">
+                <div class="plan-card-top">
+                    <div>
+                        <div class="plan-name">${escapeHtml(plan.p || '')} ${escapeHtml(plan.d || '')}</div>
+                        <div class="plan-meta">${plan.discount ? escapeHtml(plan.discount) : 'No discount'}</div>
+                    </div>
+                </div>
+                <div class="plan-features">${features}</div>
+                <div class="plan-pay-row">
+                    ${qrBlock}
+                    ${upiBlock}
+                </div>
+                <div class="plan-actions">
+                    <button class="btn-sm btn-outline" onclick="openPlanModal(${idx})">Edit</button>
+                    <button class="btn-sm btn-danger" onclick="deletePlan(${idx})">Delete</button>
+                </div>
+            </div>`;
+        });
+    }
+
+    // ════════════════════════════════════════════════════════
+    //  PLANS — modal open/close
+    // ════════════════════════════════════════════════════════
+    window.openPlanModal = function(idx) {
+        const overlay = document.getElementById('planModalOverlay');
+        const title = document.getElementById('planModalTitle');
+        const qrPreview = document.getElementById('qrPreview');
+
+        document.getElementById('planIndex').value = (idx === undefined) ? '' : idx;
+
+        if (idx === undefined) {
+            title.textContent = 'Add Plan';
+            document.getElementById('planPrice').value = '';
+            document.getElementById('planDuration').value = '';
+            document.getElementById('planFeatures').value = '';
+            document.getElementById('planDiscount').value = '';
+            document.getElementById('planUpi').value = '';
+            document.getElementById('planQr').value = '';
+            qrPreview.style.display = 'none';
+        } else {
+            const plan = plansCache[idx] || {};
+            title.textContent = 'Edit Plan';
+            document.getElementById('planPrice').value = plan.p || '';
+            document.getElementById('planDuration').value = plan.d || '';
+            document.getElementById('planFeatures').value = (plan.f || []).join(', ');
+            document.getElementById('planDiscount').value = plan.discount || '';
+            document.getElementById('planUpi').value = plan.upi || '';
+            document.getElementById('planQr').value = plan.qr || '';
+            previewQr(plan.qr || '');
+        }
+
+        overlay.classList.add('show');
+    };
+
+    window.closePlanModal = function() {
+        document.getElementById('planModalOverlay').classList.remove('show');
+    };
+
+    window.previewQr = function(url) {
+        const img = document.getElementById('qrPreview');
+        if (url) {
+            img.src = url;
+            img.style.display = 'block';
+            img.onerror = () => { img.style.display = 'none'; };
+        } else {
+            img.style.display = 'none';
+        }
+    };
+
+    // ════════════════════════════════════════════════════════
+    //  PLANS — save (add or edit)
+    // ════════════════════════════════════════════════════════
+    window.savePlan = async function() {
+        const idxRaw = document.getElementById('planIndex').value;
+        const idx = idxRaw === '' ? null : parseInt(idxRaw, 10);
+
+        const price = document.getElementById('planPrice').value.trim();
+        const duration = document.getElementById('planDuration').value.trim();
+        const featuresRaw = document.getElementById('planFeatures').value.trim();
+        const discount = document.getElementById('planDiscount').value.trim();
+        const upi = document.getElementById('planUpi').value.trim();
+        const qr = document.getElementById('planQr').value.trim();
+
+        if (!price) {
+            showToast('Price is required', 'error');
+            return;
+        }
+
+        const features = featuresRaw
+            ? featuresRaw.split(',').map(s => s.trim()).filter(Boolean)
+            : [];
+
+        const planObj = { p: price, d: duration, f: features, discount, upi, qr };
+
+        if (idx === null) {
+            plansCache.push(planObj);
+        } else {
+            plansCache[idx] = planObj;
+        }
+
+        try {
+            await set(ref(db, 'plans'), plansCache);
+            renderPlans();
+            closePlanModal();
+            showToast(idx === null ? 'Plan added' : 'Plan updated', 'success');
+        } catch (e) {
+            showToast('Error: ' + e.message, 'error');
+        }
+    };
+
+    // ════════════════════════════════════════════════════════
+    //  PLANS — delete
+    // ════════════════════════════════════════════════════════
+    window.deletePlan = async function(idx) {
+        if (!confirm('Delete this plan? This cannot be undone.')) return;
+        plansCache.splice(idx, 1);
+        try {
+            await set(ref(db, 'plans'), plansCache);
+            renderPlans();
+            showToast('Plan deleted', 'success');
+        } catch (e) {
+            showToast('Error: ' + e.message, 'error');
+        }
+    };
+
+    // ════════════════════════════════════════════════════════
+    //  SETTINGS — Telegram verification toggle
+    // ════════════════════════════════════════════════════════
+    window.loadSettings = async function() {
+        const toggle = document.getElementById('tgVerifyToggle');
+        const state  = document.getElementById('tgVerifyState');
+        toggle.disabled = true;
+        state.textContent = 'Loading…';
+        state.className = 'setting-state';
+        try {
+            const snap = await get(ref(db, 'settings/telegram_verification'));
+            // Default ON when the key has never been set.
+            const enabled = snap.exists() ? !!snap.val() : true;
+            toggle.checked = enabled;
+            setTgStateLabel(enabled);
+        } catch (e) {
+            state.textContent = 'Error: ' + e.message;
+            state.className = 'setting-state state-off';
+        } finally {
+            toggle.disabled = false;
+        }
+    };
+
+    function setTgStateLabel(enabled) {
+        const state = document.getElementById('tgVerifyState');
+        state.textContent = enabled ? 'Currently: ON' : 'Currently: OFF';
+        state.className = 'setting-state ' + (enabled ? 'state-on' : 'state-off');
+    }
+
+    window.saveTgVerify = async function(enabled) {
+        const toggle = document.getElementById('tgVerifyToggle');
+        toggle.disabled = true;
+        try {
+            await set(ref(db, 'settings/telegram_verification'), enabled);
+            setTgStateLabel(enabled);
+            showToast('Telegram verification ' + (enabled ? 'enabled' : 'disabled'), 'success');
+        } catch (e) {
+            // revert on failure
+            toggle.checked = !enabled;
+            setTgStateLabel(!enabled);
+            showToast('Error: ' + e.message, 'error');
+        } finally {
+            toggle.disabled = false;
+        }
+    };
+
+    // ════════════════════════════════════════════════════════
+    //  GAMES — load + render + add/edit/delete  (Firebase: games/)
+    // ════════════════════════════════════════════════════════
+    let allGames = {};   // { gameId: gameObj, ... }
+    const CAT_LABEL = { "30s": "30 Seconds", "1min": "1 Minute" };
+
+    window.loadGames = async function() {
+        const body = document.getElementById('gameBody');
+        body.innerHTML = '<div class="loading-state">Loading games...</div>';
+        try {
+            const snap = await get(ref(db, 'games'));
+            allGames = snap.exists() ? snap.val() : {};
+            renderGames();
+        } catch (e) {
+            body.innerHTML = `<div class="empty-state" style="color:#EF4444;">Error: ${escapeHtml(e.message)}</div>`;
+        }
+    };
+
+    window.renderGames = function() {
+        const body = document.getElementById('gameBody');
+        const filter = document.getElementById('gameCatFilter')?.value || 'all';
+        const ids = Object.keys(allGames)
+            .filter(id => filter === 'all' || (allGames[id]?.category === filter))
+            .sort((a, b) => (allGames[b].created_at || 0) - (allGames[a].created_at || 0));
+
+        if (ids.length === 0) {
+            body.innerHTML = `<div class="empty-state">No ${filter === 'all' ? '' : CAT_LABEL[filter] + ' '}games yet. Click "Add Game" to create one.</div>`;
+            return;
+        }
+        body.innerHTML = '';
+        ids.forEach(id => {
+            const g = allGames[id] || {};
+            const cat = g.category || '30s';
+            const catClass = cat === '1min' ? 'cat-1min' : 'cat-30s';
+            const thumb = g.image
+                ? `<img class="game-thumb" src="${escapeAttr(g.image)}" alt="" onerror="this.outerHTML='<div class=\\'game-thumb-fallback\\'>${escapeAttr((g.name||'?').charAt(0).toUpperCase())}</div>'">`
+                : `<div class="game-thumb-fallback">${escapeHtml((g.name || '?').charAt(0).toUpperCase())}</div>`;
+            body.innerHTML += `
+            <div class="game-card" data-gid="${escapeAttr(id)}">
+                ${thumb}
+                <div class="game-info">
+                    <div class="game-name">${escapeHtml(g.name || 'Untitled')}</div>
+                    <div class="game-slug">/game/${escapeHtml(g.slug || '')}</div>
+                    <span class="cat-badge ${catClass}">${escapeHtml(CAT_LABEL[cat] || cat)}</span>
+                </div>
+                <div class="game-actions">
+                    <button class="btn-sm btn-teal" onclick="openGameModal('${escapeAttr(id)}')">Edit</button>
+                    <button class="btn-sm btn-danger" onclick="deleteGame('${escapeAttr(id)}')">Delete</button>
+                </div>
+            </div>`;
+        });
+    };
+
+    window.openGameModal = function(id) {
+        const title = document.getElementById('gameModalTitle');
+        document.getElementById('gameId').value = id || '';
+        if (!id) {
+            title.textContent = 'Add Game';
+            document.getElementById('gameName').value = '';
+            document.getElementById('gameCategory').value = '30s';
+            document.getElementById('gameImage').value = '';
+            document.getElementById('gameLink').value = '';
+            previewGameImg('');
+        } else {
+            const g = allGames[id] || {};
+            title.textContent = 'Edit Game';
+            document.getElementById('gameName').value = g.name || '';
+            document.getElementById('gameCategory').value = g.category || '30s';
+            document.getElementById('gameImage').value = g.image || '';
+            document.getElementById('gameLink').value = g.link || '';
+            previewGameImg(g.image || '');
+        }
+        document.getElementById('gameModalOverlay').classList.add('show');
+    };
+
+    window.closeGameModal = function() {
+        document.getElementById('gameModalOverlay').classList.remove('show');
+    };
+
+    window.previewGameImg = function(url) {
+        const img = document.getElementById('gameImgPreview');
+        if (url) {
+            img.src = url;
+            img.style.display = 'block';
+            img.onerror = () => { img.style.display = 'none'; };
+        } else {
+            img.style.display = 'none';
+        }
+    };
+
+    // Build a URL-safe slug from the name, e.g. "Wingo Lite" -> "wingo-lite"
+    function slugify(text) {
+        const s = (text || '').trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+        return s || 'game';
+    }
+    // Guarantee the slug is unique across games so /game/{slug} stays unambiguous
+    function uniqueSlug(base, excludeId) {
+        const existing = new Set();
+        Object.keys(allGames).forEach(id => {
+            if (id === excludeId) return;
+            if (allGames[id]?.slug) existing.add(allGames[id].slug);
+        });
+        let slug = base, i = 2;
+        while (existing.has(slug)) { slug = `${base}-${i}`; i++; }
+        return slug;
+    }
+
+    window.saveGame = async function() {
+        const id = document.getElementById('gameId').value;
+        const name = document.getElementById('gameName').value.trim();
+        const category = document.getElementById('gameCategory').value;
+        const image = document.getElementById('gameImage').value.trim();
+        const link = document.getElementById('gameLink').value.trim();
+
+        if (!name) { showToast('Game name is required', 'error'); return; }
+        if (!['30s', '1min'].includes(category)) { showToast('Invalid category', 'error'); return; }
+
+        try {
+            if (!id) {
+                // ── ADD ──
+                const slug = uniqueSlug(slugify(name));
+                const newRef = push(ref(db, 'games'));
+                await set(newRef, {
+                    name, image, link, category, slug,
+                    created_at: { ".sv": "timestamp" },
+                });
+                allGames[newRef.key] = { name, image, link, category, slug, created_at: Date.now() };
+                showToast('Game added', 'success');
+            } else {
+                // ── UPDATE ── (keep slug in sync with the name)
+                const slug = uniqueSlug(slugify(name), id);
+                await update(ref(db, `games/${id}`), { name, image, link, category, slug });
+                allGames[id] = { ...(allGames[id] || {}), name, image, link, category, slug };
+                showToast('Game updated', 'success');
+            }
+            renderGames();
+            closeGameModal();
+        } catch (e) {
+            showToast('Error: ' + e.message, 'error');
+        }
+    };
+
+    window.deleteGame = async function(id) {
+        const g = allGames[id] || {};
+        if (!confirm(`Delete "${g.name || 'this game'}"? This cannot be undone.`)) return;
+        try {
+            await remove(ref(db, `games/${id}`));
+            delete allGames[id];
+            renderGames();
+            showToast('Game deleted', 'success');
+        } catch (e) {
+            showToast('Error: ' + e.message, 'error');
+        }
+    };
+
+    // ════════════════════════════════════════════════════════
+    //  HELPERS
+    // ════════════════════════════════════════════════════════
+    function escapeHtml(str) {
+        if (str === undefined || str === null) return '';
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+    function escapeAttr(str) { return escapeHtml(str); }
+    function cssEscape(str) {
+        return String(str).replace(/(["\\])/g, '\\$1');
+    }
+
+    // ════════════════════════════════════════════════════════
+    //  INIT
+    // ════════════════════════════════════════════════════════
+    loadUsers();
+</script>
+</body>
+</html>

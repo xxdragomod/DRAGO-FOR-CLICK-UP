@@ -1,0 +1,6 @@
+backend/vps/firebase-adminsdk.json
+.env
+.env.*
+node_modules/
+__pycache__/
+*.pyc

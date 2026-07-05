@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Home — Drago Predictor</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+@view-transition{navigation:auto}
+::view-transition-old(root){animation:vtOut .22s cubic-bezier(.4,0,.2,1) both}
+::view-transition-new(root){animation:vtIn .26s cubic-bezier(.22,1,.36,1) both}
+@keyframes vtOut{to{opacity:0;transform:translateY(-8px)}}
+@keyframes vtIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+body{
+  min-height:100vh;
+  background:linear-gradient(180deg,#c3caff 0%,#e2e5ff 40%,#ffffff 100%);
+  font-family:'Montserrat',sans-serif;
+  display:flex;flex-direction:column;align-items:center;
+  padding:20px 14px 120px;
+}
+
+/* Profile banner */
+#profileBanner{display:flex;align-items:center;gap:10px;width:100%;max-width:460px;margin-bottom:20px}
+#avatarWrap img{width:46px;height:46px;border-radius:50%;object-fit:cover;display:block}
+.avatar-fallback{width:46px;height:46px;border-radius:50%;background:linear-gradient(135deg,#7C3AED,#5B6AF0);display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:800;color:#fff}
+.profile-info{display:flex;flex-direction:column;line-height:1.3}
+.welcome-text{font-size:11px;font-weight:600;color:#6b7280}
+.user-name{font-size:16px;font-weight:900;color:#1a1a2e;text-transform:uppercase;max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* Hero */
+.hero{width:100%;max-width:460px;background:#fff;border-radius:24px;padding:26px 22px;box-shadow:0 12px 30px rgba(124,92,252,.12);text-align:center;margin-bottom:18px}
+.hero img{width:110px;height:auto;margin-bottom:12px}
+.hero h1{font-size:24px;font-weight:900;color:#7C5CFC;margin-bottom:8px}
+.hero p{font-size:13px;color:#6b7280;line-height:1.5}
+.badge-active{display:inline-flex;align-items:center;gap:6px;margin-top:14px;background:linear-gradient(135deg,#10B981,#059669);color:#fff;font-size:12px;font-weight:800;padding:6px 16px;border-radius:30px;text-transform:uppercase;letter-spacing:.5px}
+
+/* Quick cards */
+.cards{width:100%;max-width:460px;display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.qcard{background:#fff;border-radius:20px;padding:20px 16px;box-shadow:0 8px 20px rgba(0,0,0,.05);text-align:left;cursor:pointer;transition:transform .15s;border:1.5px solid #eef0ff}
+.qcard:active{transform:scale(.97)}
+.qcard i{font-size:24px;color:#7C5CFC;margin-bottom:10px;display:block}
+.qcard h3{font-size:15px;font-weight:800;color:#1a1a2e;margin-bottom:4px}
+.qcard span{font-size:11px;color:#6b7280;font-weight:600}
+
+/* Navbar — floating pill, always visible */
+.navbar{
+  background:rgba(255,255,255,0.92);
+  backdrop-filter:blur(20px);
+  -webkit-backdrop-filter:blur(20px);
+  width:calc(100% - 28px);
+  max-width:432px;
+  border-radius:28px;
+  padding:10px 6px;
+  display:flex;justify-content:space-around;align-items:center;
+  box-shadow:0 8px 28px rgba(100,80,220,.15);
+  border:1.5px solid rgba(255,255,255,0.95);
+  position:fixed;bottom:14px;
+  left:50%;transform:translateX(-50%);
+  animation:navSlideUp .4s .1s cubic-bezier(.22,1,.36,1) both;
+  z-index:900;
+}
+@keyframes navSlideUp{from{opacity:0;transform:translateX(-50%) translateY(24px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+.nav-item{display:flex;align-items:center;padding:8px 14px;border-radius:20px;text-decoration:none;color:#888;transition:all .25s cubic-bezier(.34,1.56,.64,1);-webkit-tap-highlight-color:transparent}
+.nav-item i{font-size:18px}
+.nav-item span{margin-left:0;max-width:0;overflow:hidden;transition:.25s;white-space:nowrap;font-weight:800;font-size:13px}
+.nav-item.active{background-color:#7680F5;color:#fff}
+.nav-item.active span{margin-left:7px;max-width:100px}
+
+
+
+/* Status overlay */
+.full-ov{display:none;position:fixed;inset:0;z-index:3000;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:30px;background:linear-gradient(180deg,#c3caff,#e2e5ff 40%,#fff)}
+.full-ov.show{display:flex}
+.ov-icon{font-size:54px;margin-bottom:14px}
+.ov-title{font-size:22px;font-weight:900;color:#1E293B;margin-bottom:10px}
+.ov-desc{font-size:14px;color:#6b7280;max-width:320px;line-height:1.6;margin-bottom:20px}
+.ov-link{display:inline-block;background:linear-gradient(135deg,#7C3AED,#5B6AF0);color:#fff;text-decoration:none;padding:12px 24px;border-radius:12px;font-weight:800;font-size:14px}
+
+#loadingOverlay{position:fixed;inset:0;background:linear-gradient(180deg,#c3caff,#e2e5ff 40%,#fff);display:flex;align-items:center;justify-content:center;z-index:999;transition:opacity .3s}
+.spinner{width:44px;height:44px;border:4px solid rgba(124,92,252,.2);border-top-color:#7C5CFC;border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+
+<div id="loadingOverlay"><div class="spinner"></div></div>
+
+<!-- Status overlays -->
+<div class="full-ov" id="ovBanned">
+  <div class="ov-icon">🚫</div>
+  <div class="ov-title">Account Banned</div>
+  <div class="ov-desc">Aapka account permanently ban kar diya gaya hai. Kisi bhi content tak access nahi hai.</div>
+  <a href="https://t.me/xx_drago" target="_blank" class="ov-link">Contact Support</a>
+</div>
+<div class="full-ov" id="ovBlocked">
+  <div class="ov-icon">⛔</div>
+  <div class="ov-title">Account Blocked</div>
+  <div class="ov-desc">Aapka account block kar diya gaya hai. Support se contact karo.</div>
+  <a href="https://t.me/xx_drago" target="_blank" class="ov-link">Contact Support</a>
+</div>
+<div class="full-ov" id="ovPaused">
+  <div class="ov-icon">⏸️</div>
+  <div class="ov-title">Account Paused</div>
+  <div class="ov-desc">Aapka account temporarily pause hai. Thodi der baad try karo.</div>
+  <a href="https://t.me/xx_drago" target="_blank" class="ov-link">Contact Support</a>
+</div>
+<div class="full-ov" id="ovExpired">
+  <div class="ov-icon">⌛</div>
+  <div class="ov-title">Subscription Expired</div>
+  <div class="ov-desc">Aapka plan expire ho gaya hai. Naya plan select karke continue karo.</div>
+  <a href="/payment" class="ov-link">Select Plan</a>
+</div>
+
+<!-- Profile -->
+<div id="profileBanner">
+  <div id="avatarWrap"></div>
+  <div class="profile-info">
+    <span class="welcome-text">Welcome back,</span>
+    <span class="user-name" id="bannerName">User</span>
+  </div>
+</div>
+
+<!-- Hero -->
+<div class="hero">
+  <img src="/images/logo.jpg" alt="Drago Predictor Logo">
+  <h1>Drago Predictor</h1>
+  <p>Welcome to your dashboard. Real-time predictions, insights aur premium tools ab aapke control me hain.</p>
+  <span class="badge-active"><i class="fa-solid fa-circle-check"></i> Plan Active</span>
+</div>
+
+<!-- Quick actions -->
+<div class="cards">
+  <div class="qcard" id="cardGame">
+    <i class="fa-solid fa-gamepad"></i>
+    <h3>Predictor</h3>
+    <span>Launch the game predictor</span>
+  </div>
+  <div class="qcard" id="cardPlan">
+    <i class="fa-solid fa-calendar-check"></i>
+    <h3>My Plan</h3>
+    <span>View &amp; manage plan</span>
+  </div>
+  <div class="qcard" onclick="window.open('https://t.me/+t_giD22Lulk0NmE1','_blank')">
+    <i class="fa-solid fa-bullhorn"></i>
+    <h3>Channel</h3>
+    <span>Latest updates</span>
+  </div>
+  <div class="qcard" onclick="window.open('https://t.me/xx_drago','_blank')">
+    <i class="fa-solid fa-headset"></i>
+    <h3>Support</h3>
+    <span>We are here to help</span>
+  </div>
+</div>
+
+<!-- Navbar -->
+<nav class="navbar" id="navbar">
+  <a href="/home" class="nav-item active"><i class="fa-solid fa-house"></i><span>Home</span></a>
+  <a href="/game" class="nav-item" id="navGame"><i class="fa-solid fa-gamepad"></i><span>Game</span></a>
+  <a href="/payment" class="nav-item"><i class="fa-solid fa-calendar-check"></i><span>Plan</span></a>
+  <a href="/profile" class="nav-item"><i class="fa-regular fa-user"></i><span>Profile</span></a>
+</nav>
+
+<script>
+const API = "https://flask-hello-world-nu-sooty-63.vercel.app";
+let pollTmr=null;
+
+function ud(){ try{return JSON.parse(localStorage.getItem("_ud")||"null");}catch(e){return null;} }
+function auth(){
+  const u=ud();
+  if(!u||!u.uid||!u.session_signature) return null;
+  return {uid:u.uid,session_signature:u.session_signature};
+}
+function goLogin(){ localStorage.removeItem("_ud"); localStorage.removeItem("_qas"); window.location.replace("/"); }
+
+async function api(path, body){
+  const r=await fetch(API+path,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
+  const d=await r.json().catch(()=>({}));
+  if(!r.ok){ const e=new Error(d.detail||"Error "+r.status); e.status=r.status; e.detail=d.detail||""; throw e; }
+  return d;
+}
+async function withRefresh(cb){
+  try{ return await cb(); }
+  catch(e){
+    if(e.status===403 && e.detail==="session_expired"){
+      const a=auth(); if(!a){ goLogin(); return; }
+      try{
+        const d=await api("/api/refresh-session",a);
+        if(d.session_signature){ const u=ud(); u.session_signature=d.session_signature; localStorage.setItem("_ud",JSON.stringify(u)); }
+        return await cb();
+      }catch(e2){ if(e2.status===403){ goLogin(); return; } throw e2; }
+    }
+    throw e;
+  }
+}
+
+function hideOvs(){ ["ovBanned","ovBlocked","ovPaused","ovExpired"].forEach(id=>document.getElementById(id).classList.remove("show")); }
+
+// returns false if access should stop
+function handleStatus(as, ss){
+  if(as==="banned") { stopPoll(); hideOvs(); document.getElementById("ovBanned").classList.add("show");  return false; }
+  if(as==="blocked"){ stopPoll(); hideOvs(); document.getElementById("ovBlocked").classList.add("show"); return false; }
+  if(as==="paused") { stopPoll(); hideOvs(); document.getElementById("ovPaused").classList.add("show");  return false; }
+  if(ss!=="active" && ss!=="free") { stopPoll(); hideOvs(); document.getElementById("ovExpired").classList.add("show"); return false; }
+  hideOvs(); return true;
+}
+
+function startPoll(){ if(pollTmr) return; pollTmr=setInterval(doPoll,15000); }
+function stopPoll(){ if(pollTmr){clearInterval(pollTmr);pollTmr=null;} }
+async function doPoll(){
+  const a=auth(); if(!a) return;
+  try{
+    const d=await withRefresh(()=>api("/api/account-status",a));
+    handleStatus(d.account_status,d.subscription_status);
+  }catch(e){}
+}
+
+function loadProfile(){
+  const u=ud(); if(!u) return;
+  document.getElementById("bannerName").textContent=u.name||"User";
+  const aw=document.getElementById("avatarWrap");
+  if(u.picture){
+    const img=document.createElement("img"); img.src=u.picture; img.alt=u.name||"User";
+    img.onerror=()=>{ img.remove(); mkAvatar(aw,u.name); };
+    aw.appendChild(img);
+  } else { mkAvatar(aw,u.name); }
+}
+function mkAvatar(el,name){
+  const d=document.createElement("div"); d.className="avatar-fallback";
+  d.textContent=(name||"U").charAt(0).toUpperCase(); el.appendChild(d);
+}
+
+async function init(){
+  const a=auth(); if(!a){ goLogin(); return; }
+  loadProfile();
+  // Fallback: always show page within 4s even if API hangs
+  const loaderTimeout=setTimeout(()=>{ hideLoader(); startPoll(); },4000);
+  try{
+    const d=await withRefresh(()=>api("/api/account-status",a));
+    clearTimeout(loaderTimeout);
+    if(!handleStatus(d.account_status||"active",d.subscription_status||"none")){ hideLoader(); return; }
+    startPoll();
+  }catch(e){ clearTimeout(loaderTimeout); startPoll(); }
+  hideLoader();
+}
+function hideLoader(){ const l=document.getElementById("loadingOverlay"); if(!l) return; l.style.opacity="0"; setTimeout(()=>{ if(l) l.style.display="none"; },300); }
+
+// quick card / nav actions
+document.getElementById("cardPlan").addEventListener("click",()=>window.location.href="/payment");
+document.getElementById("cardGame").addEventListener("click",()=>window.location.href="/game");
+document.getElementById("navGame").addEventListener("click",()=>window.location.href="/game");
+
+init();
+</script>
+</body>
+</html>
