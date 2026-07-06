@@ -2,8 +2,8 @@ import { NextResponse } from 'next/server'
 
 export const dynamic = 'force-dynamic'
 
-// Same Firebase Realtime DB the admin panel writes games to.
-const FIREBASE_GAMES_URL =
+// Move Firebase URL to environment variable — never hardcode in source code
+const FIREBASE_GAMES_URL = process.env.FIREBASE_GAMES_URL ??
   'https://quantum-anlyzer-default-rtdb.firebaseio.com/games.json'
 
 // Public endpoint: returns games (added via the admin panel) for the static
